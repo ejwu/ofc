@@ -271,6 +271,13 @@ public class StupidEvalTest extends TestCase {
 		assertEquals(acesk, acesk2);
 		long acesq = eval3("Ac Ad Qs");
 		assertTrue(acesk > acesq);
+		long kings = eval3("Kc Kd Qs");
+		assertTrue(acesq > kings);
+		long deucesHigh = eval3("Ac 2c 2d");
+		assertTrue(kings > deucesHigh);
+		long deucesLow = eval3("2c 3h 2d");
+		assertTrue(deucesHigh > deucesLow);
+		assertTrue(deucesLow >= StupidEval.ONE_PAIR);
 	}
 
 }
