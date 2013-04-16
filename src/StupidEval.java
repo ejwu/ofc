@@ -15,10 +15,12 @@ public class StupidEval {
 	public static final long STRAIGHT_FLUSH =           8000000000000000L;
 	public static final long ROYAL_FLUSH =              9000000000000000L;
 
-	private static final long PAIR_CONSTANT =             10000000000000L;
+	// public because OfcHand uses this.  So dumb.
+	public static final long PAIR_CONSTANT =             10000000000000L;
 	private static final long KICKER_START_MULTIPLIER =     100000000000L;
 	private static final long KICKER_DIVISOR = 100L;
 	
+	// OfcHand is dependent on implementation details here, don't mess with them
 	public static long eval3(int[] ranks) {
 		if (ranks[3] != 0) {
 			throw new IllegalArgumentException("Are you sure you only have 3 cards?");
@@ -37,6 +39,7 @@ public class StupidEval {
 		return countKickers(ranks, 0, 1, 2);
 	}
 	
+	// OfcHand is dependent on implementation details here, don't mess with them
 	public static long eval(int[] ranks, int[] suits) {
 		if (isFlush(suits)) {
 			if (isStraight(ranks)) {

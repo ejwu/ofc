@@ -1,8 +1,10 @@
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 
@@ -16,6 +18,15 @@ public class OfcHand {
 	private List<OfcCard> middle = Lists.newArrayListWithExpectedSize(MIDDLE_SIZE);
 	private List<OfcCard> front = Lists.newArrayListWithExpectedSize(FRONT_SIZE);
 	
+	private static final Map<Long, Integer> backRoyaltyMap = ImmutableMap.<Long, Integer>builder()
+		.put(StupidEval.STRAIGHT, 2)
+		.put(StupidEval.FLUSH, 4)
+		.put(StupidEval.FULL_HOUSE, 6)
+		.put(StupidEval.QUADS, 8)
+		.put(StupidEval.STRAIGHT_FLUSH, 10)
+		.put(StupidEval.ROYAL_FLUSH, 25)
+		.build();
+		
 	public OfcHand() {
 	}
 
@@ -60,9 +71,96 @@ public class OfcHand {
 			throw new IllegalStateException("Can't evaluate hand before complete");
 		}
 		
-		return false;
+		return getFrontRank() > getMiddleRank() || getMiddleRank() > getBackRank();
 	}
 
+	public int getRoyaltyValue() {
+		if (!isComplete()) {
+			throw new IllegalArgumentException("Hand not complete");
+		}
+		if (isFouled()) {
+			return 0;
+		}
+		int value = 0;
+		
+		// Stupid integer division hack to zero out all the insignificant digits so we can use a map to look up
+		// royalty values
+		long rank = getBackRank() / StupidEval.ONE_PAIR * StupidEval.ONE_PAIR;
+		if (backRoyaltyMap.containsKey(rank)) {
+			value += backRoyaltyMap.get(rank);
+		}
+		rank = getMiddleRank() / StupidEval.ONE_PAIR * StupidEval.ONE_PAIR;
+		if (backRoyaltyMap.containsKey(rank)) {
+			value += backRoyaltyMap.get(rank) * 2;
+		}
+		
+		rank = getFrontRank();
+		if (rank >= StupidEval.TRIPS) {
+			rank -= StupidEval.TRIPS;
+			// StupidEval implementation is to leave only the rank of the card here.  Deuce = 0, per Deck constants
+			// Yes, this is super lame. 15 points for 222, one more for every higher rank.
+			value += 15 + rank;
+		} else if (rank >= StupidEval.ONE_PAIR) {
+			// More stupid implementation dependent details.  Subtract out the ONE_PAIR constant, integer divide
+			// the kickers away, get left with the rank of the pair based on Deck constants.  66 = 5.
+			rank -= StupidEval.ONE_PAIR;
+			rank /= StupidEval.PAIR_CONSTANT;
+			if (rank >= 5) {
+				value += rank - 4;
+			}
+		}
+		
+		
+		return value;
+	}
+	
+	public int scoreAgainst(OfcHand other) {
+		if (!isComplete() || !other.isComplete()) {
+			throw new IllegalArgumentException("Can only compare complete hands");
+		}
+		if (isFouled()) {
+			if (other.isFouled()) {
+				return 0;
+			}
+			return -6;
+		}
+		if (other.isFouled()) {
+			return 6;
+		}
+		int wins = 0;
+		if (getBackRank() > other.getBackRank()) {
+			wins++;
+		}
+		if (getMiddleRank() > other.getMiddleRank()) {
+			wins++;
+		}
+		if (getFrontRank() > other.getFrontRank()) {
+			wins++;
+		}
+		
+		switch (wins) {
+			case 0:
+				return -6;
+			case 1:
+				return -1;
+			case 2:
+				return 1;
+			case 3:
+				return 6;
+			default:
+				throw new IllegalStateException("wtf");
+		}
+	}
+	
+	public long getFrontRank() {
+		// TODO: see other TODOS
+		// TODO: maybe makes these size 3 instead and don't check length in StupidEval
+		int[] ranks = new int[5];
+		int[] suits = new int[5];
+		convertForEval(front, ranks, suits);
+		return StupidEval.eval3(ranks);
+	}
+	
 	public long getMiddleRank() {
 		// TODO: reuse the array
 		// TODO: cache this value?

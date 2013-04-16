@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 
 
 public class OfcSolver {
@@ -70,14 +72,14 @@ public class OfcSolver {
 		System.out.println(deck);
 		System.out.println(player1);
 		System.out.println(player2);
-		System.out.println(player3);
-		
-		player3.addBack(deck.removeCard("5c"));
-		player3.addMiddle(deck.removeCard("9c"));
-		
-		System.out.println(player3);
-		System.out.println(player3.getBackRank());
-		System.out.println(player3.getMiddleRank());
+		System.out.println(player3);		
+
+		player1.addBack(deck.removeCard("As"));
+		System.out.println(player1);
+		System.out.println(player1.getRoyaltyValue());
+		System.out.println(player1.getBackRank());
+		System.out.println(player1.getMiddleRank());
+		System.out.println(player1.getFrontRank());
 	}
 	
 }
