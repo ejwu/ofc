@@ -1,5 +1,3 @@
-import java.util.Arrays;
-
 
 
 public class OfcSolver {
@@ -18,9 +16,6 @@ public class OfcSolver {
 		OfcDeck deck = new OfcDeck();
 		deck.initialize();
 		
-		System.out.println(deck);
-		System.out.println(deck);
-
 		OfcHand player1 = new OfcHand();
 		player1.addFront(deck.removeCard("2d"));
 		player1.addFront(deck.removeCard("Td"));
@@ -52,7 +47,9 @@ public class OfcSolver {
 		player2.addBack(deck.removeCard("Ts"));
 		player2.addBack(deck.removeCard("Kd"));
 		player2.addBack(deck.removeCard("Ks"));
-		
+
+		player2.addBack(deck.removeCard("2s"));
+		/*
 		OfcHand player3 = new OfcHand();
 		
 		player3.addFront(deck.removeCard("4s"));
@@ -68,18 +65,22 @@ public class OfcSolver {
 		player3.addBack(deck.removeCard("Qc"));
 		player3.addBack(deck.removeCard("7c"));
 		player3.addBack(deck.removeCard("6c"));
-
+*/
 		System.out.println(deck);
 		System.out.println(player1);
 		System.out.println(player2);
-		System.out.println(player3);		
 
+		GameState gs = new GameState(player1, player2, deck);
+		System.out.println(gs);
+		System.out.println(gs.generateNewStates());
+		/*
 		player1.addBack(deck.removeCard("As"));
 		System.out.println(player1);
 		System.out.println(player1.getRoyaltyValue());
 		System.out.println(player1.getBackRank());
 		System.out.println(player1.getMiddleRank());
 		System.out.println(player1.getFrontRank());
+*/
 	}
 	
 }

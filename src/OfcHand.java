@@ -2,10 +2,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 
 public class OfcHand {
@@ -30,6 +32,47 @@ public class OfcHand {
 	public OfcHand() {
 	}
 
+	public OfcHand copy() {
+		OfcHand hand = new OfcHand();
+		for (OfcCard card : back) {
+			hand.addBack(card);
+		}
+		for (OfcCard card : middle) {
+			hand.addMiddle(card);
+		}
+		for (OfcCard card : front) {
+			hand.addFront(card);
+		}
+		return hand;
+	}
+	
+	public Set<OfcHand> generateHands(OfcCard card) {
+		Set<OfcHand> hands = Sets.newHashSetWithExpectedSize(3);
+		if (back.size() < BACK_SIZE) {
+			OfcHand copy = this.copy();
+			copy.addBack(card);
+			hands.add(copy);
+			if (willBeFouled()) {
+				// exit early if foul is guaranteed
+				return hands;
+			}
+		}
+		if (middle.size() < MIDDLE_SIZE) {
+			OfcHand copy = this.copy();
+			copy.addMiddle(card);
+			hands.add(copy);
+			if (willBeFouled()) {
+				return hands;
+			}
+		}
+		if (front.size() < FRONT_SIZE) {
+			OfcHand copy = this.copy();
+			copy.addBack(card);
+			hands.add(copy);
+		}
+		return hands;
+	}
+	
 	public void addBack(OfcCard card) {
 		if (back.size() < BACK_SIZE) {
 			back.add(card);
@@ -122,10 +165,10 @@ public class OfcHand {
 			if (other.isFouled()) {
 				return 0;
 			}
-			return -6;
+			return -6 - other.getRoyaltyValue();
 		}
 		if (other.isFouled()) {
-			return 6;
+			return 6 + getRoyaltyValue();
 		}
 		int wins = 0;
 		if (getBackRank() > other.getBackRank()) {
@@ -140,13 +183,13 @@ public class OfcHand {
 		
 		switch (wins) {
 			case 0:
-				return -6;
+				return -6 + getRoyaltyValue() - other.getRoyaltyValue();
 			case 1:
-				return -1;
+				return -1 + getRoyaltyValue() - other.getRoyaltyValue();
 			case 2:
-				return 1;
+				return 1 + getRoyaltyValue() - other.getRoyaltyValue();
 			case 3:
-				return 6;
+				return 6 + getRoyaltyValue() - other.getRoyaltyValue();
 			default:
 				throw new IllegalStateException("wtf");
 		}
@@ -154,7 +197,7 @@ public class OfcHand {
 	
 	public long getFrontRank() {
 		// TODO: see other TODOS
-		// TODO: maybe makes these size 3 instead and don't check length in StupidEval
+		// TODO: maybe make these size 3 instead and don't check length in StupidEval
 		int[] ranks = new int[5];
 		int[] suits = new int[5];
 		convertForEval(front, ranks, suits);
