@@ -19,6 +19,12 @@ public class OfcHand {
 	private List<OfcCard> back = Lists.newArrayListWithExpectedSize(BACK_SIZE);
 	private List<OfcCard> middle = Lists.newArrayListWithExpectedSize(MIDDLE_SIZE);
 	private List<OfcCard> front = Lists.newArrayListWithExpectedSize(FRONT_SIZE);
+	private boolean willBeFouled = false;
+
+	private static final long UNSET = 0L;
+	private long backValue = UNSET;
+	private long middleValue = UNSET;
+	private long frontValue = UNSET;
 	
 	private static final Map<Long, Integer> backRoyaltyMap = ImmutableMap.<Long, Integer>builder()
 		.put(StupidEval.STRAIGHT, 2)
@@ -43,6 +49,13 @@ public class OfcHand {
 		for (OfcCard card : front) {
 			hand.addFront(card);
 		}
+
+		// internal helper variables
+		hand.willBeFouled = willBeFouled;
+		hand.backValue = backValue;
+		hand.middleValue = middleValue;
+		hand.frontValue = frontValue;
+
 		return hand;
 	}
 	
@@ -67,7 +80,7 @@ public class OfcHand {
 		}
 		if (front.size() < FRONT_SIZE) {
 			OfcHand copy = this.copy();
-			copy.addBack(card);
+			copy.addFront(card);
 			hands.add(copy);
 		}
 		return hands;
@@ -76,6 +89,17 @@ public class OfcHand {
 	public void addBack(OfcCard card) {
 		if (back.size() < BACK_SIZE) {
 			back.add(card);
+			// Once a hand is complete, calculate its rank immediately to cache it and pass it on to
+			// future branches of this hand
+			if (back.size() == BACK_SIZE) {
+				getBackRank();
+				if (middleValue != UNSET && middleValue > backValue) {
+					willBeFouled = true;
+				}
+				if (frontValue != UNSET && frontValue > backValue) {
+					willBeFouled = true;
+				}
+			}
 		} else {
 			throw new IllegalStateException("Back is full");
 		}
@@ -84,6 +108,17 @@ public class OfcHand {
 	public void addMiddle(OfcCard card) {
 		if (middle.size() < MIDDLE_SIZE) {
 			middle.add(card);
+			// Once a hand is complete, calculate its rank immediately to cache it and pass it on to
+			// future branches of this hand
+			if (middle.size() == MIDDLE_SIZE) {
+				getMiddleRank();
+			}
+			if (backValue != UNSET && middleValue > backValue) {
+				willBeFouled = true;
+			}
+			if (frontValue != UNSET && frontValue > middleValue) {
+				willBeFouled = true;
+			}
 		} else {
 			throw new IllegalStateException("Middle is full");
 		}
@@ -92,6 +127,17 @@ public class OfcHand {
 	public void addFront(OfcCard card) {
 		if (front.size() < FRONT_SIZE) {
 			front.add(card);
+			// Once a hand is complete, calculate its rank immediately to cache it and pass it on to
+			// future branches of this hand
+			if (front.size() == FRONT_SIZE) {
+				getFrontRank();
+			}
+			if (middleValue != UNSET && frontValue > middleValue) {
+				willBeFouled = true;
+			}
+			if (backValue != UNSET && frontValue > backValue) {
+				willBeFouled = true;
+			}
 		} else {
 			throw new IllegalStateException("Front is full");
 		}
@@ -196,32 +242,36 @@ public class OfcHand {
 	}
 	
 	public long getFrontRank() {
-		// TODO: see other TODOS
-		// TODO: maybe make these size 3 instead and don't check length in StupidEval
-		int[] ranks = new int[5];
-		int[] suits = new int[5];
-		convertForEval(front, ranks, suits);
-		return StupidEval.eval3(ranks);
+		if (frontValue == 0L) {
+			// TODO: maybe make these size 3 instead and don't check length in StupidEval
+			int[] ranks = new int[5];
+			int[] suits = new int[5];
+			convertForEval(front, ranks, suits);
+			frontValue = StupidEval.eval3(ranks);
+		}
+		return frontValue;
 	}
 	
 	public long getMiddleRank() {
-		// TODO: reuse the array
-		// TODO: cache this value?
-		int[] ranks = new int[5];
-		int[] suits = new int[5];
-		convertForEval(middle, ranks, suits);
-		return StupidEval.eval(ranks, suits);
+		if (middleValue == 0L) {
+			int[] ranks = new int[5];
+			int[] suits = new int[5];
+			convertForEval(middle, ranks, suits);
+			middleValue = StupidEval.eval(ranks, suits);
+		}
+		return middleValue;
 	}
 
 	public long getBackRank() {
-		// TODO: reuse the array
-		// TODO: cache this value?
-		int[] ranks = new int[5];
-		int[] suits = new int[5];
-		convertForEval(back, ranks, suits);
-		return StupidEval.eval(ranks, suits);
+		if (backValue == 0L) {
+			int[] ranks = new int[5];
+			int[] suits = new int[5];
+			convertForEval(back, ranks, suits);
+			backValue = StupidEval.eval(ranks, suits);
+		}
+		return backValue;
 	}
-	
+		
 	/**
 	 * Fill the ranks and suits arrays with the value of the hand.
 	 */
@@ -250,7 +300,47 @@ public class OfcHand {
 		}
 	}
 	
+	public int getStreet() {
+		return front.size() + middle.size() + back.size() + 1;
+	}
 	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((back == null) ? 0 : back.hashCode());
+		result = prime * result + ((front == null) ? 0 : front.hashCode());
+		result = prime * result + ((middle == null) ? 0 : middle.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		OfcHand other = (OfcHand) obj;
+		if (back == null) {
+			if (other.back != null)
+				return false;
+		} else if (!back.equals(other.back))
+			return false;
+		if (front == null) {
+			if (other.front != null)
+				return false;
+		} else if (!front.equals(other.front))
+			return false;
+		if (middle == null) {
+			if (other.middle != null)
+				return false;
+		} else if (!middle.equals(other.middle))
+			return false;
+		return true;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

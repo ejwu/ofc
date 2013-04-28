@@ -280,4 +280,22 @@ public class StupidEvalTest extends TestCase {
 		assertTrue(deucesLow >= StupidEval.ONE_PAIR);
 	}
 
+	public void test3NoPair() {
+		long akq = eval3("Ac Kc Qc");
+		assertTrue(akq < StupidEval.ONE_PAIR);
+		long akq2 = eval3("Ad Ks Qh");
+		assertEquals(akq, akq2);
+		long akj = eval3("Ad Kd Jd");
+		assertTrue(akq2 > akj);
+		long a32 = eval3("Ad 3s 2d");
+		assertTrue(akj > a32);
+		long kqj = eval3("Ks Qs Js");
+		assertTrue(a32 > kqj);
+		long nutFour = eval3("4s 3d 2h");
+		assertTrue(kqj > nutFour);
+		assertTrue(nutFour >= StupidEval.NO_PAIR);
+	}
+
+	// 5 vs 3 card hand tests
+	
 }

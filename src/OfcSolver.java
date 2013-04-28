@@ -1,5 +1,3 @@
-
-
 public class OfcSolver {
 
 	/**
@@ -22,9 +20,9 @@ public class OfcSolver {
 		player1.addFront(deck.removeCard("2c"));
 		
 		player1.addMiddle(deck.removeCard("7s"));
-		player1.addMiddle(deck.removeCard("5s"));
+//		player1.addMiddle(deck.removeCard("7c"));
 		player1.addMiddle(deck.removeCard("Qd"));
-		player1.addMiddle(deck.removeCard("7h"));
+		//player1.addMiddle(deck.removeCard("7h"));
 		player1.addMiddle(deck.removeCard("Kc"));
 
 		player1.addBack(deck.removeCard("Ah"));
@@ -35,11 +33,11 @@ public class OfcSolver {
 		OfcHand player2 = new OfcHand();
 		player2.addFront(deck.removeCard("6h"));
 		player2.addFront(deck.removeCard("2h"));
-		player2.addFront(deck.removeCard("8c"));
+//		player2.addFront(deck.removeCard("8c"));
 		
-		player2.addMiddle(deck.removeCard("8d"));
-		player2.addMiddle(deck.removeCard("8s"));
-		player2.addMiddle(deck.removeCard("3c"));
+//		player2.addMiddle(deck.removeCard("8d"));
+//		player2.addMiddle(deck.removeCard("8s"));
+		player2.addMiddle(deck.removeCard("8h"));
 		player2.addMiddle(deck.removeCard("Js"));
 		player2.addMiddle(deck.removeCard("9s"));
 		
@@ -47,11 +45,11 @@ public class OfcSolver {
 		player2.addBack(deck.removeCard("Ts"));
 		player2.addBack(deck.removeCard("Kd"));
 		player2.addBack(deck.removeCard("Ks"));
-
 		player2.addBack(deck.removeCard("2s"));
-		/*
-		OfcHand player3 = new OfcHand();
+
 		
+		/*	
+		OfcHand player3 = new OfcHand();
 		player3.addFront(deck.removeCard("4s"));
 		player3.addFront(deck.removeCard("Qs"));
 		player3.addFront(deck.removeCard("7d"));
@@ -66,21 +64,12 @@ public class OfcSolver {
 		player3.addBack(deck.removeCard("7c"));
 		player3.addBack(deck.removeCard("6c"));
 */
-		System.out.println(deck);
-		System.out.println(player1);
-		System.out.println(player2);
-
 		GameState gs = new GameState(player1, player2, deck);
 		System.out.println(gs);
-		System.out.println(gs.generateNewStates());
-		/*
-		player1.addBack(deck.removeCard("As"));
-		System.out.println(player1);
-		System.out.println(player1.getRoyaltyValue());
-		System.out.println(player1.getBackRank());
-		System.out.println(player1.getMiddleRank());
-		System.out.println(player1.getFrontRank());
-*/
+
+		long timestamp = System.currentTimeMillis();	
+		System.out.println(gs.getValue());
+		System.out.println((System.currentTimeMillis() - timestamp) / 1000 + " seconds");
 	}
 	
 }

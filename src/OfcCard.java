@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 
 
 public class OfcCard {
+
 	private static final Map<Character, Integer> rankMap = Maps.newHashMap();
 	private static final Map<Character, Integer> suitMap = Maps.newHashMap();
 	
@@ -59,6 +60,32 @@ public class OfcCard {
 	public int getSuit() {
 		return suitMap.get(card.charAt(1));
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((card == null) ? 0 : card.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		OfcCard other = (OfcCard) obj;
+		if (card == null) {
+			if (other.card != null)
+				return false;
+		} else if (!card.equals(other.card))
+			return false;
+		return true;
+	}
+
 	
 	public String toString() {
 		return card;
