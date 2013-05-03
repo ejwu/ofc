@@ -6,39 +6,32 @@ public interface OfcHand {
 	public static final int MIDDLE_SIZE = 5;
 	public static final int FRONT_SIZE = 3;
 	
-	public abstract OfcHand copy();
+	OfcHand copy();
 
-	public abstract Set<OfcHand> generateHands(OfcCard card);
+	Set<OfcHand> generateHands(OfcCard card);
 
-	public abstract void addBack(OfcCard card);
+	void addBack(OfcCard card);
 
-	public abstract void addMiddle(OfcCard card);
+	void addMiddle(OfcCard card);
 
-	public abstract void addFront(OfcCard card);
+	void addFront(OfcCard card);
 
-	public abstract boolean isComplete();
+	boolean isComplete();
 
 	// use for pruning the search space
-	public abstract boolean willBeFouled();
+	boolean willBeFouled();
 
-	public abstract boolean isFouled();
+	boolean isFouled();
 
-	public abstract int getRoyaltyValue();
+	int getRoyaltyValue();
 
-	public abstract int scoreAgainst(OfcHand other);
+	int scoreAgainst(OfcHand other);
 
-	public abstract long getFrontRank();
+	long getFrontRank();
 
-	public abstract long getMiddleRank();
+	long getMiddleRank();
 
-	public abstract long getBackRank();
+	long getBackRank();
 
-	public abstract int getStreet();
-
-	public abstract int hashCode();
-
-	public abstract boolean equals(Object obj);
-
-	public abstract String toString();
-
+	int getStreet();
 }

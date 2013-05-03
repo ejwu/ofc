@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry excluding="src/" kind="src" path=""/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-	<classpathentry kind="lib" path="C:/Users/ejwu/Desktop/workspace/jars/guava-r07.jar"/>
 	<classpathentry kind="lib" path="C:/Users/ejwu/Desktop/workspace/jars/junit-3.7.jar"/>
-	<classpathentry kind="lib" path="C:/Users/ejwu/Desktop/workspace/jars/pokersource.jar" sourcepath="C:/Users/ejwu/Desktop/workspace/jars/pokersource.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ejwu/Desktop/workspace/XPokerEval.Pokersource/java/pokersource.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="C:/Users/ejwu/Desktop/workspace/jars/guava-14.0.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

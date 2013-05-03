@@ -15,7 +15,6 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 	private List<OfcCard> back = Lists.newArrayListWithExpectedSize(BACK_SIZE);
 	private List<OfcCard> middle = Lists.newArrayListWithExpectedSize(MIDDLE_SIZE);
 	private List<OfcCard> front = Lists.newArrayListWithExpectedSize(FRONT_SIZE);
-	private boolean willBeFouled = false;
 
 	private static final Map<Long, Integer> backRoyaltyMap = ImmutableMap.<Long, Integer>builder()
 		.put(StupidEval.STRAIGHT, 2)
@@ -44,8 +43,6 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 		for (OfcCard card : front) {
 			hand.addFront(card);
 		}
-
-		hand.willBeFouled = willBeFouled;
 
 		super.copy(hand);
 
@@ -150,8 +147,8 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 	 */
 	@Override
 	public boolean willBeFouled() {
-		return false;
-		// TODO: add clever things here for when a hand isn't complete but will definitely foul
+		return willBeFouled;
+		// TODO: add more clever things here for when a hand isn't complete but will definitely foul
 	}
 	
 	/* (non-Javadoc)
@@ -257,7 +254,7 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 	 */
 	@Override
 	public long getFrontRank() {
-		if (frontValue == 0L) {
+		if (frontValue == UNSET) {
 			// TODO: maybe make these size 3 instead and don't check length in StupidEval
 			int[] ranks = new int[5];
 			int[] suits = new int[5];
@@ -272,7 +269,7 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 	 */
 	@Override
 	public long getMiddleRank() {
-		if (middleValue == 0L) {
+		if (middleValue == UNSET) {
 			int[] ranks = new int[5];
 			int[] suits = new int[5];
 			convertForEval(middle, ranks, suits);
@@ -286,7 +283,7 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 	 */
 	@Override
 	public long getBackRank() {
-		if (backValue == 0L) {
+		if (backValue == UNSET) {
 			int[] ranks = new int[5];
 			int[] suits = new int[5];
 			convertForEval(back, ranks, suits);

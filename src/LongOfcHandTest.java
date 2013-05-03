@@ -14,4 +14,7 @@ public class LongOfcHandTest extends CachedValueOfcHandTestCase {
 		cHand2 = new LongOfcHand();
 	}
 	
+	public void testHandIsSorted() {
+		
+	}
 }

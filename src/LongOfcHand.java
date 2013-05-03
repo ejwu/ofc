@@ -1,6 +1,11 @@
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 
 import org.pokersource.game.Deck;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class LongOfcHand extends CachedValueOfcHand {
 
@@ -40,6 +45,10 @@ public class LongOfcHand extends CachedValueOfcHand {
 			throw new IllegalArgumentException("Card already in back");
 		}
 		back |= card.getMask();
+		
+		if (Long.bitCount(back) == BACK_SIZE) {
+			completeBack();
+		}
 	}
 
 	@Override
@@ -51,6 +60,10 @@ public class LongOfcHand extends CachedValueOfcHand {
 			throw new IllegalArgumentException("Card already in middle");
 		}
 		middle |= card.getMask();
+
+		if (Long.bitCount(middle) == MIDDLE_SIZE) {
+			completeMiddle();
+		}
 	}
 
 	@Override
@@ -62,6 +75,10 @@ public class LongOfcHand extends CachedValueOfcHand {
 			throw new IllegalArgumentException("Card already in front");
 		}
 		front |= card.getMask();
+
+		if (Long.bitCount(front) == FRONT_SIZE) {
+			completeFront();
+		}
 	}
 
 	@Override
@@ -73,14 +90,17 @@ public class LongOfcHand extends CachedValueOfcHand {
 
 	@Override
 	public boolean willBeFouled() {
-		// TODO Auto-generated method stub
-		return false;
+		return willBeFouled;
 	}
 
 	@Override
 	public boolean isFouled() {
-		// TODO Auto-generated method stub
-		return false;
+		if (!isComplete()) {
+			throw new IllegalStateException("Hand not complete");
+		}
+		// TODO: Be damn sure about this.  Making an assumption that when the hand is complete, willBeFouled is always populated
+		// via the completeXXX methods
+		return willBeFouled;
 	}
 
 	@Override
@@ -95,22 +115,67 @@ public class LongOfcHand extends CachedValueOfcHand {
 		return 0;
 	}
 
+	/**
+	 * Fill the ranks and suits arrays with the value of the hand.
+	 */
+	@VisibleForTesting
+	static void convertForEval(long mask, int[] ranks, int[] suits) {
+		long numCards = Long.bitCount(mask);
+		// TODO: be smarter about which hand we're checking
+		if (numCards != FRONT_SIZE &&  numCards != BACK_SIZE) {
+			throw new IllegalArgumentException("Hand isn't complete");
+		}
+		
+		int index = 0;
+
+		// NOTE: There's a hidden requirement here that the cards are sorted in descending order
+		for (String card : Deck.cardMaskString(mask).split(" ")) {
+			ranks[index] = Deck.parseRank(card.substring(0, 1));
+			suits[index] = Deck.parseSuit(card.substring(1, 2));
+			index++;
+		}
+	}
+	
 	@Override
 	public long getFrontRank() {
-		// TODO Auto-generated method stub
-		return 0;
+		if (frontValue == UNSET) {
+			if (Long.bitCount(front) != FRONT_SIZE) {
+				throw new IllegalStateException("Front not complete");
+			}
+			int[] ranks = new int[3];
+			int[] suits = new int[3];
+			convertForEval(front, ranks, suits);
+			frontValue = StupidEval.eval3(ranks);
+		}
+		return frontValue;
 	}
 
 	@Override
 	public long getMiddleRank() {
-		// TODO Auto-generated method stub
-		return 0;
+		if (middleValue == UNSET) {
+			if (Long.bitCount(middle) != MIDDLE_SIZE) {
+				throw new IllegalStateException("Middle not complete");
+			}
+			int[] ranks = new int[5];
+			int[] suits = new int[5];
+			convertForEval(middle, ranks, suits);
+			middleValue = StupidEval.eval(ranks, suits);
+		}
+		return middleValue;
 	}
 
 	@Override
 	public long getBackRank() {
-		// TODO Auto-generated method stub
-		return 0;
+		if (backValue == UNSET) {
+			if (Long.bitCount(back) != BACK_SIZE) {
+				throw new IllegalStateException("Back not complete");
+			}
+			int[] ranks = new int[5];
+			int[] suits = new int[5];
+			convertForEval(back, ranks, suits);
+			backValue = StupidEval.eval(ranks, suits);
+		}
+		return backValue;
 	}
 
 	@Override

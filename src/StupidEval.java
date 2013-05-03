@@ -22,7 +22,7 @@ public class StupidEval {
 	
 	// OfcHand is dependent on implementation details here, don't mess with them
 	public static long eval3(int[] ranks) {
-		if (ranks[3] != 0) {
+		if (ranks.length != 3 && ranks[3] != 0) {
 			throw new IllegalArgumentException("Are you sure you only have 3 cards?");
 		}
 		if (ranks[0] == ranks[1] && ranks[1] == ranks[2]) {
