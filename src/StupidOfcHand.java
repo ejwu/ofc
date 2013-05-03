@@ -93,13 +93,7 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 			// Once a hand is complete, calculate its rank immediately to cache it and pass it on to
 			// future branches of this hand
 			if (back.size() == BACK_SIZE) {
-				getBackRank();
-				if (middleValue != UNSET && middleValue > backValue) {
-					willBeFouled = true;
-				}
-				if (frontValue != UNSET && frontValue > backValue) {
-					willBeFouled = true;
-				}
+				completeBack();
 			}
 		} else {
 			throw new IllegalStateException("Back is full");
@@ -116,13 +110,7 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 			// Once a hand is complete, calculate its rank immediately to cache it and pass it on to
 			// future branches of this hand
 			if (middle.size() == MIDDLE_SIZE) {
-				getMiddleRank();
-			}
-			if (backValue != UNSET && middleValue > backValue) {
-				willBeFouled = true;
-			}
-			if (frontValue != UNSET && frontValue > middleValue) {
-				willBeFouled = true;
+				completeMiddle();
 			}
 		} else {
 			throw new IllegalStateException("Middle is full");
@@ -139,13 +127,7 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 			// Once a hand is complete, calculate its rank immediately to cache it and pass it on to
 			// future branches of this hand
 			if (front.size() == FRONT_SIZE) {
-				getFrontRank();
-			}
-			if (middleValue != UNSET && frontValue > middleValue) {
-				willBeFouled = true;
-			}
-			if (backValue != UNSET && frontValue > backValue) {
-				willBeFouled = true;
+				completeFront();
 			}
 		} else {
 			throw new IllegalStateException("Front is full");

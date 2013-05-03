@@ -6,12 +6,21 @@ public abstract class OfcHandTestCase extends TestCase {
 	protected OfcHand hand1;
 	protected OfcHand hand2;
 	
-	abstract protected void setUp() throws Exception;
+	protected void setUp() throws Exception {
+		super.setUp();
+		initHands();
+	}
+	
+	protected void tearDown() throws Exception {
+		super.tearDown();
+	}
 	
 	protected OfcHandTestCase(String name) {
 		super(name);
 	}
 
+	protected abstract void initHands();
+	
 	private void assertHashesDifferent() {
 		assertTrue(hand1.hashCode() != hand2.hashCode());
 	}
