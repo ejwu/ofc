@@ -22,6 +22,9 @@ public class OfcDeck {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see CardBitSet#getMask()
+	 */
 	public long getMask() {
 		return cardMask;
 	}
@@ -36,6 +39,9 @@ public class OfcDeck {
 	}
 	
 	// TODO: this returns array of length 1 for an empty deck, seems dumb
+	/* (non-Javadoc)
+	 * @see CardBitSet#allCards()
+	 */
 	public String[] allCards() {
 		return Deck.cardMaskString(cardMask).split(" ");
 	}
@@ -67,6 +73,9 @@ public class OfcDeck {
 		return true;
 	}
 
+	/* (non-Javadoc)
+	 * @see CardBitSet#toString()
+	 */
 	@Override
 	public String toString() {
 		return Deck.cardMaskString(cardMask);

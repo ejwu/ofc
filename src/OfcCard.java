@@ -61,6 +61,10 @@ public class OfcCard {
 		return suitMap.get(card.charAt(1));
 	}
 
+	public long getMask() {
+		return Deck.createCardMask(getRank(), getSuit());
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

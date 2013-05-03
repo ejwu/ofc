@@ -14,7 +14,7 @@ public class OfcSolver {
 		OfcDeck deck = new OfcDeck();
 		deck.initialize();
 		
-		OfcHand player1 = new OfcHand();
+		OfcHand player1 = new StupidOfcHand();
 		player1.addFront(deck.removeCard("2d"));
 		player1.addFront(deck.removeCard("Td"));
 		player1.addFront(deck.removeCard("2c"));
@@ -30,7 +30,7 @@ public class OfcSolver {
 		player1.addBack(deck.removeCard("Jd"));
 		player1.addBack(deck.removeCard("Ad"));
 		
-		OfcHand player2 = new OfcHand();
+		OfcHand player2 = new StupidOfcHand();
 		player2.addFront(deck.removeCard("6h"));
 		player2.addFront(deck.removeCard("2h"));
 //		player2.addFront(deck.removeCard("8c"));

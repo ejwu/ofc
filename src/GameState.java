@@ -22,7 +22,7 @@ import com.google.common.collect.ConcurrentHashMultiset;
 
 public class GameState {
 	
-	ExecutorService executor = Executors.newFixedThreadPool(4);
+	ExecutorService executor = Executors.newFixedThreadPool(1);
 
 	private static final Cache<GameState, Double> cache =
 		CacheBuilder.newBuilder().concurrencyLevel(2)
@@ -30,8 +30,6 @@ public class GameState {
 			.recordStats().build();
 	
 //	private static ConcurrentMap<GameState, Double> cache = Maps.newConcurrentMap();
-	private static AtomicInteger cacheHits = new AtomicInteger(0);
-	private static AtomicInteger cacheMisses = new AtomicInteger(0);
 	
 	// instrumentation
 	private static AtomicLong statesGenerated = new AtomicLong(0L);

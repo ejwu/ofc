@@ -26,7 +26,7 @@ public class StupidEvalTest extends TestCase {
 		for (String card : handString.split(" ")) {
 			hand.add(new OfcCard(card));
 		}
-		OfcHand.convertForEval(hand, ranks, suits);
+		StupidOfcHand.convertForEval(hand, ranks, suits);
 	}
 	
 	private long evalHand(String handString) {
