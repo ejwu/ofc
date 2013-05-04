@@ -15,22 +15,10 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 	private List<OfcCard> back = Lists.newArrayListWithExpectedSize(BACK_SIZE);
 	private List<OfcCard> middle = Lists.newArrayListWithExpectedSize(MIDDLE_SIZE);
 	private List<OfcCard> front = Lists.newArrayListWithExpectedSize(FRONT_SIZE);
-
-	private static final Map<Long, Integer> backRoyaltyMap = ImmutableMap.<Long, Integer>builder()
-		.put(StupidEval.STRAIGHT, 2)
-		.put(StupidEval.FLUSH, 4)
-		.put(StupidEval.FULL_HOUSE, 6)
-		.put(StupidEval.QUADS, 8)
-		.put(StupidEval.STRAIGHT_FLUSH, 10)
-		.put(StupidEval.ROYAL_FLUSH, 25)
-		.build();
 		
 	public StupidOfcHand() {
 	}
 
-	/*
-	 *
-	 */
 	@Override
 	public StupidOfcHand copy() {
 		StupidOfcHand hand = new StupidOfcHand();
@@ -48,38 +36,7 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 
 		return hand;
 	}
-	
-	/* (non-Javadoc)
-	 * @see OfcHand#generateHands(OfcCard)
-	 */
-	@Override
-	public Set<OfcHand> generateHands(OfcCard card) {
-		Set<OfcHand> hands = Sets.newHashSetWithExpectedSize(3);
-		if (back.size() < BACK_SIZE) {
-			StupidOfcHand copy = this.copy();
-			copy.addBack(card);
-			hands.add(copy);
-			if (willBeFouled()) {
-				// exit early if foul is guaranteed
-				return hands;
-			}
-		}
-		if (middle.size() < MIDDLE_SIZE) {
-			StupidOfcHand copy = this.copy();
-			copy.addMiddle(card);
-			hands.add(copy);
-			if (willBeFouled()) {
-				return hands;
-			}
-		}
-		if (front.size() < FRONT_SIZE) {
-			StupidOfcHand copy = this.copy();
-			copy.addFront(card);
-			hands.add(copy);
-		}
-		return hands;
-	}
-	
+		
 	/* (non-Javadoc)
 	 * @see OfcHand#addBack(OfcCard)
 	 */
@@ -131,14 +88,26 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 		}
 	}
 	
+	public int getBackSize() {
+		return back.size();
+	}
+	
+	public int getMiddleSize() {
+		return middle.size();
+	}
+	
+	public int getFrontSize() {
+		return front.size();
+	}
+	
 	/* (non-Javadoc)
 	 * @see OfcHand#isComplete()
 	 */
 	@Override
 	public boolean isComplete() {
-		return back.size() == BACK_SIZE &&
-				middle.size() == MIDDLE_SIZE &&
-				front.size() == FRONT_SIZE;
+		return getBackSize() == BACK_SIZE &&
+				getMiddleSize() == MIDDLE_SIZE &&
+				getFrontSize() == FRONT_SIZE;
 	}
 	
 	// use for pruning the search space
@@ -163,91 +132,6 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 		return getFrontRank() > getMiddleRank() || getMiddleRank() > getBackRank();
 	}
 
-	/* (non-Javadoc)
-	 * @see OfcHand#getRoyaltyValue()
-	 */
-	@Override
-	public int getRoyaltyValue() {
-		if (!isComplete()) {
-			throw new IllegalArgumentException("Hand not complete");
-		}
-		if (isFouled()) {
-			return 0;
-		}
-		int value = 0;
-		
-		// Stupid integer division hack to zero out all the insignificant digits so we can use a map to look up
-		// royalty values
-		long rank = getBackRank() / StupidEval.ONE_PAIR * StupidEval.ONE_PAIR;
-		if (backRoyaltyMap.containsKey(rank)) {
-			value += backRoyaltyMap.get(rank);
-		}
-		rank = getMiddleRank() / StupidEval.ONE_PAIR * StupidEval.ONE_PAIR;
-		if (backRoyaltyMap.containsKey(rank)) {
-			value += backRoyaltyMap.get(rank) * 2;
-		}
-		
-		rank = getFrontRank();
-		if (rank >= StupidEval.TRIPS) {
-			rank -= StupidEval.TRIPS;
-			// StupidEval implementation is to leave only the rank of the card here.  Deuce = 0, per Deck constants
-			// Yes, this is super lame. 15 points for 222, one more for every higher rank.
-			value += 15 + rank;
-		} else if (rank >= StupidEval.ONE_PAIR) {
-			// More stupid implementation dependent details.  Subtract out the ONE_PAIR constant, integer divide
-			// the kickers away, get left with the rank of the pair based on Deck constants.  66 = 5.
-			rank -= StupidEval.ONE_PAIR;
-			rank /= StupidEval.PAIR_CONSTANT;
-			if (rank >= 5) {
-				value += rank - 4;
-			}
-		}
-		
-		
-		return value;
-	}
-	
-	/* (non-Javadoc)
-	 * @see OfcHand#scoreAgainst(OfcHand)
-	 */
-	@Override
-	public int scoreAgainst(OfcHand other) {
-		if (!isComplete() || !other.isComplete()) {
-			throw new IllegalArgumentException("Can only compare complete hands");
-		}
-		if (isFouled()) {
-			if (other.isFouled()) {
-				return 0;
-			}
-			return -6 - other.getRoyaltyValue();
-		}
-		if (other.isFouled()) {
-			return 6 + getRoyaltyValue();
-		}
-		int wins = 0;
-		if (getBackRank() > other.getBackRank()) {
-			wins++;
-		}
-		if (getMiddleRank() > other.getMiddleRank()) {
-			wins++;
-		}
-		if (getFrontRank() > other.getFrontRank()) {
-			wins++;
-		}
-		
-		switch (wins) {
-			case 0:
-				return -6 + getRoyaltyValue() - other.getRoyaltyValue();
-			case 1:
-				return -1 + getRoyaltyValue() - other.getRoyaltyValue();
-			case 2:
-				return 1 + getRoyaltyValue() - other.getRoyaltyValue();
-			case 3:
-				return 6 + getRoyaltyValue() - other.getRoyaltyValue();
-			default:
-				throw new IllegalStateException("wtf");
-		}
-	}
 	
 	/* (non-Javadoc)
 	 * @see OfcHand#getFrontRank()
@@ -325,7 +209,7 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 	 */
 	@Override
 	public int getStreet() {
-		return front.size() + middle.size() + back.size() + 1;
+		return getFrontSize() + getMiddleSize() + getBackSize() + 1;
 	}
 	
 	/* (non-Javadoc)

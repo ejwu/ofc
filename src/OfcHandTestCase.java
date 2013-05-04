@@ -110,4 +110,9 @@ public abstract class OfcHandTestCase extends TestCase {
 		hand1.addBack(new OfcCard("Th"));
 		assertTrue(hand1.isComplete());
 	}
+	
+	// TODO: many more tests, especially for scoring
+	public void testFouled() {
+		
+	}
 }

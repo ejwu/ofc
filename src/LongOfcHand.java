@@ -9,9 +9,12 @@ import com.google.common.annotations.VisibleForTesting;
 
 public class LongOfcHand extends CachedValueOfcHand {
 
-	private long front;
-	private long middle;
-	private long back;
+	@VisibleForTesting
+	long front;
+	@VisibleForTesting
+	long middle;
+	@VisibleForTesting
+	long back;
 	
 	public LongOfcHand() {
 		front = 0;
@@ -31,14 +34,23 @@ public class LongOfcHand extends CachedValueOfcHand {
 	}
 
 	@Override
-	public Set<OfcHand> generateHands(OfcCard card) {
-		// TODO Auto-generated method stub
-		return null;
+	public int getBackSize() {
+		return Long.bitCount(back);
 	}
-
+	
+	@Override
+	public int getMiddleSize() {
+		return Long.bitCount(middle);
+	}
+	
+	@Override
+	public int getFrontSize() {
+		return Long.bitCount(front);
+	}
+	
 	@Override
 	public void addBack(OfcCard card) {
-		if (Long.bitCount(back) >= BACK_SIZE) {
+		if (getBackSize() >= BACK_SIZE) {
 			throw new IllegalStateException("Back already full");
 		}
 		if ((back & card.getMask()) != 0) {
@@ -46,14 +58,14 @@ public class LongOfcHand extends CachedValueOfcHand {
 		}
 		back |= card.getMask();
 		
-		if (Long.bitCount(back) == BACK_SIZE) {
+		if (getBackSize() == BACK_SIZE) {
 			completeBack();
 		}
 	}
 
 	@Override
 	public void addMiddle(OfcCard card) {
-		if (Long.bitCount(middle) >= MIDDLE_SIZE) {
+		if (getMiddleSize() >= MIDDLE_SIZE) {
 			throw new IllegalStateException("Middle already full");
 		}
 		if ((middle & card.getMask()) != 0) {
@@ -61,14 +73,14 @@ public class LongOfcHand extends CachedValueOfcHand {
 		}
 		middle |= card.getMask();
 
-		if (Long.bitCount(middle) == MIDDLE_SIZE) {
+		if (getMiddleSize() == MIDDLE_SIZE) {
 			completeMiddle();
 		}
 	}
 
 	@Override
 	public void addFront(OfcCard card) {
-		if (Long.bitCount(front) >= FRONT_SIZE) {
+		if (getFrontSize() >= FRONT_SIZE) {
 			throw new IllegalStateException("Front already full");
 		}
 		if ((front & card.getMask()) != 0) {
@@ -76,16 +88,16 @@ public class LongOfcHand extends CachedValueOfcHand {
 		}
 		front |= card.getMask();
 
-		if (Long.bitCount(front) == FRONT_SIZE) {
+		if (getFrontSize() == FRONT_SIZE) {
 			completeFront();
 		}
 	}
 
 	@Override
 	public boolean isComplete() {
-		return Long.bitCount(front) == FRONT_SIZE &&
-				Long.bitCount(middle) == MIDDLE_SIZE &&
-				Long.bitCount(back) == BACK_SIZE;
+		return getFrontSize() == FRONT_SIZE &&
+				getMiddleSize() == MIDDLE_SIZE &&
+				getBackSize() == BACK_SIZE;
 	}
 
 	@Override
@@ -101,18 +113,6 @@ public class LongOfcHand extends CachedValueOfcHand {
 		// TODO: Be damn sure about this.  Making an assumption that when the hand is complete, willBeFouled is always populated
 		// via the completeXXX methods
 		return willBeFouled;
-	}
-
-	@Override
-	public int getRoyaltyValue() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public int scoreAgainst(OfcHand other) {
-		// TODO Auto-generated method stub
-		return 0;
 	}
 
 	/**
@@ -139,7 +139,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 	@Override
 	public long getFrontRank() {
 		if (frontValue == UNSET) {
-			if (Long.bitCount(front) != FRONT_SIZE) {
+			if (getFrontSize() != FRONT_SIZE) {
 				throw new IllegalStateException("Front not complete");
 			}
 			int[] ranks = new int[3];
@@ -153,7 +153,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 	@Override
 	public long getMiddleRank() {
 		if (middleValue == UNSET) {
-			if (Long.bitCount(middle) != MIDDLE_SIZE) {
+			if (getMiddleSize() != MIDDLE_SIZE) {
 				throw new IllegalStateException("Middle not complete");
 			}
 			int[] ranks = new int[5];
@@ -167,7 +167,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 	@Override
 	public long getBackRank() {
 		if (backValue == UNSET) {
-			if (Long.bitCount(back) != BACK_SIZE) {
+			if (getBackSize() != BACK_SIZE) {
 				throw new IllegalStateException("Back not complete");
 			}
 			int[] ranks = new int[5];
@@ -180,7 +180,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 
 	@Override
 	public int getStreet() {
-		return Long.bitCount(front) + Long.bitCount(middle) + Long.bitCount(back) + 1;
+		return getFrontSize() + getMiddleSize() + getBackSize() + 1;
 	}
 
 	private String maskToString(long mask) {
@@ -227,5 +227,4 @@ public class LongOfcHand extends CachedValueOfcHand {
 		return true;
 	}
 
-	
 }

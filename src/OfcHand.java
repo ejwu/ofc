@@ -1,10 +1,22 @@
+import java.util.Map;
 import java.util.Set;
+
+import com.google.common.collect.ImmutableMap;
 
 public interface OfcHand {
 
 	public static final int BACK_SIZE = 5;
 	public static final int MIDDLE_SIZE = 5;
 	public static final int FRONT_SIZE = 3;
+
+	static final Map<Long, Integer> backRoyaltyMap = ImmutableMap.<Long, Integer>builder()
+			.put(StupidEval.STRAIGHT, 2)
+			.put(StupidEval.FLUSH, 4)
+			.put(StupidEval.FULL_HOUSE, 6)
+			.put(StupidEval.QUADS, 8)
+			.put(StupidEval.STRAIGHT_FLUSH, 10)
+			.put(StupidEval.ROYAL_FLUSH, 25)
+			.build();	
 	
 	OfcHand copy();
 
@@ -16,6 +28,10 @@ public interface OfcHand {
 
 	void addFront(OfcCard card);
 
+	int getBackSize();
+	int getMiddleSize();
+	int getFrontSize();
+	
 	boolean isComplete();
 
 	// use for pruning the search space

@@ -52,5 +52,22 @@ public abstract class CachedValueOfcHandTestCase extends OfcHandTestCase {
 		cHand1.addMiddle(new OfcCard("2d"));
 		assertEquals(handValue, cHand1.middleValue);
 	}
-	
+
+	public void testCompleteBack() {
+		int[] ranks = new int[] {Deck.RANK_6, Deck.RANK_6, Deck.RANK_6, Deck.RANK_3, Deck.RANK_3};
+		int[] suits = new int[] {Deck.SUIT_CLUBS,  Deck.SUIT_HEARTS, Deck.SUIT_SPADES, Deck.SUIT_CLUBS, Deck.SUIT_DIAMONDS};
+		long handValue = StupidEval.eval(ranks, suits);
+
+		assertEquals(CachedValueOfcHand.UNSET, cHand1.backValue);
+		cHand1.addBack(new OfcCard("6c"));
+		assertEquals(CachedValueOfcHand.UNSET, cHand1.backValue);
+		cHand1.addBack(new OfcCard("6h"));
+		assertEquals(CachedValueOfcHand.UNSET, cHand1.backValue);
+		cHand1.addBack(new OfcCard("6s"));
+		assertEquals(CachedValueOfcHand.UNSET, cHand1.backValue);
+		cHand1.addBack(new OfcCard("3c"));
+		assertEquals(CachedValueOfcHand.UNSET, cHand1.backValue);
+		cHand1.addBack(new OfcCard("3d"));
+		assertEquals(handValue, cHand1.backValue);
+	}
 }
