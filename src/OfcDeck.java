@@ -1,12 +1,15 @@
-import com.google.common.collect.*;
+import java.util.List;
 
-import org.pokersource.game.*;
+import org.pokersource.game.Deck;
+
+import com.google.common.collect.Lists;
 
 public class OfcDeck {
 
-	private long cardMask = 0L;
+	private long cardMask;
 	
 	public OfcDeck() {
+		cardMask = 0L;
 	}
 	
 	// copy a deck from a card mask
@@ -22,15 +25,15 @@ public class OfcDeck {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see CardBitSet#getMask()
-	 */
 	public long getMask() {
 		return cardMask;
 	}
 		
-	public long withoutCard(String card) {
-		long cardBit = Deck.parseCardMask(card);
+	public long withoutCard(OfcCard card) {
+		return withoutCard(card.getMask());
+	}
+
+	public long withoutCard(long cardBit) {
 		if ((cardMask & cardBit) == 0) {
 			throw new IllegalArgumentException("Card not in deck");
 		}
@@ -38,17 +41,14 @@ public class OfcDeck {
 		return cardMask ^ cardBit;
 	}
 	
-	// TODO: this returns array of length 1 for an empty deck, seems dumb
-	/* (non-Javadoc)
-	 * @see CardBitSet#allCards()
-	 */
-	public String[] allCards() {
-		return Deck.cardMaskString(cardMask).split(" ");
+	public OfcCard removeCard(String cardString) {		
+		OfcCard card = new OfcCard(Deck.parseCardMask(cardString));
+		cardMask = withoutCard(card);
+		return card;
 	}
 	
-	public OfcCard removeCard(String card) {		
-		cardMask = withoutCard(card);
-		return new OfcCard(card);
+	public List<OfcCard> asList() {
+		return CardSetUtils.asCards(cardMask);
 	}
 	
 	@Override
@@ -73,9 +73,6 @@ public class OfcDeck {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see CardBitSet#toString()
-	 */
 	@Override
 	public String toString() {
 		return Deck.cardMaskString(cardMask);

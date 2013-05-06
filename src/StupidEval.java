@@ -1,6 +1,6 @@
 import java.util.Arrays;
 
-import org.pokersource.game.*;
+import org.pokersource.game.Deck;
 
 public class StupidEval {
 

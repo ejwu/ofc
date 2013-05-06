@@ -70,4 +70,18 @@ public abstract class CachedValueOfcHandTestCase extends OfcHandTestCase {
 		cHand1.addBack(new OfcCard("3d"));
 		assertEquals(handValue, cHand1.backValue);
 	}
+	
+	public void testCopyRetainsCachedValue() {
+		assertEquals(CachedValueOfcHand.UNSET, cHand1.middleValue);
+		cHand1.addMiddle(new OfcCard("6c"));
+		cHand1.addMiddle(new OfcCard("5c"));
+		cHand1.addMiddle(new OfcCard("4c"));
+		cHand1.addMiddle(new OfcCard("3c"));
+		cHand1.addMiddle(new OfcCard("2d"));
+		long middleValue = cHand1.middleValue;
+		
+		CachedValueOfcHand copy = (CachedValueOfcHand) cHand1.copy();
+		assertEquals(middleValue, copy.middleValue);
+		
+	}
 }

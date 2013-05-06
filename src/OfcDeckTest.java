@@ -1,12 +1,8 @@
 
 
-import java.util.Arrays;
-
-import org.pokersource.game.Deck;
+import junit.framework.TestCase;
 
 import com.google.common.collect.Lists;
-
-import junit.framework.TestCase;
 
 
 public class OfcDeckTest extends TestCase {
@@ -16,11 +12,9 @@ public class OfcDeckTest extends TestCase {
 	
 	public void testInitialize() {
 		OfcDeck deck = new OfcDeck();
-		// TODO: this seems like a bad idea
-		assertEquals(1, deck.allCards().length);
 		assertEquals("", deck.toString());
 		deck.initialize();
-		assertEquals(52, deck.allCards().length);
+		assertEquals(52, deck.asList().size());
 		for (String rank : Lists.newArrayList("2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A")) {
 			for (String suit : Lists.newArrayList("c", "d", "h", "s")) {
 				assertTrue(deck.toString().contains(rank + suit));
@@ -32,7 +26,7 @@ public class OfcDeckTest extends TestCase {
 		OfcDeck deck = new OfcDeck();
 		deck.initialize();		
 		deck.removeCard("Ks");
-		assertEquals(51, deck.allCards().length);
+		assertEquals(51, deck.asList().size());
 		try {
 			deck.removeCard("Ks");
 			assertEquals("", deck.toString());

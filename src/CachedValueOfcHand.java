@@ -10,16 +10,20 @@ public abstract class CachedValueOfcHand implements OfcHand {
 	protected long frontValue = UNSET;
 
 	protected boolean willBeFouled = false;
-	
-	public CachedValueOfcHand() {
-		super();
-	}
 
-	protected void copy(CachedValueOfcHand hand) {
-		hand.backValue = this.backValue;
-		hand.middleValue = this.middleValue;
-		hand.frontValue = this.frontValue;
-		hand.willBeFouled = this.willBeFouled;
+	protected CachedValueOfcHand() {
+		backValue = UNSET;
+		middleValue = UNSET;
+		frontValue = UNSET;
+		willBeFouled = false;
+	}
+	
+	// copy constructor
+	protected CachedValueOfcHand(CachedValueOfcHand source) {
+		this.backValue = source.backValue;
+		this.middleValue = source.middleValue;
+		this.frontValue = source.frontValue;
+		this.willBeFouled = source.willBeFouled;
 	}
 	
 	protected void completeBack() {

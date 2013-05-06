@@ -1,3 +1,4 @@
+
 public class OfcSolver {
 //spurious
 	/**
@@ -14,7 +15,7 @@ public class OfcSolver {
 		OfcDeck deck = new OfcDeck();
 		deck.initialize();
 		
-		OfcHand player1 = new StupidOfcHand();
+		OfcHand player1 = new LongOfcHand();
 		player1.addFront(deck.removeCard("2d"));
 		player1.addFront(deck.removeCard("Td"));
 		player1.addFront(deck.removeCard("2c"));
@@ -30,7 +31,7 @@ public class OfcSolver {
 		player1.addBack(deck.removeCard("Jd"));
 		player1.addBack(deck.removeCard("Ad"));
 		
-		OfcHand player2 = new StupidOfcHand();
+		OfcHand player2 = new LongOfcHand();
 		player2.addFront(deck.removeCard("6h"));
 		player2.addFront(deck.removeCard("2h"));
 //		player2.addFront(deck.removeCard("8c"));

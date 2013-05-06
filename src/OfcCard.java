@@ -1,75 +1,91 @@
-import java.util.Map;
-
 import org.pokersource.game.Deck;
 
-import com.google.common.collect.Maps;
-
+import com.google.common.annotations.VisibleForTesting;
 
 public class OfcCard {
 
-	private static final Map<Character, Integer> rankMap = Maps.newHashMap();
-	private static final Map<Character, Integer> suitMap = Maps.newHashMap();
+	// One bit should be set, as defined in Deck
+	private long mask;
 	
-	static {
-		rankMap.put('A', Deck.RANK_ACE);
-		rankMap.put('K', Deck.RANK_KING);
-		rankMap.put('Q', Deck.RANK_QUEEN);
-		rankMap.put('J', Deck.RANK_JACK);
-		rankMap.put('T', Deck.RANK_TEN);
-		rankMap.put('9', Deck.RANK_9);
-		rankMap.put('8', Deck.RANK_8);
-		rankMap.put('7', Deck.RANK_7);
-		rankMap.put('6', Deck.RANK_6);
-		rankMap.put('5', Deck.RANK_5);
-		rankMap.put('4', Deck.RANK_4);
-		rankMap.put('3', Deck.RANK_3);
-		rankMap.put('2', Deck.RANK_2);
-
-		suitMap.put('c', Deck.SUIT_CLUBS);
-		suitMap.put('d', Deck.SUIT_DIAMONDS);
-		suitMap.put('h', Deck.SUIT_HEARTS);
-		suitMap.put('s', Deck.SUIT_SPADES);
-	}
-	
-	private String card;
-	
-	public OfcCard(String card) {
-		this.card = card;
-		
-		if (card == null) {
-			throw new IllegalArgumentException("Card must not be null");
+	public OfcCard(long mask) {
+		if (Long.bitCount(mask) != 1) {
+			throw new IllegalArgumentException("Only one bit should be set");
 		}
-		
-		if (card.length() != 2) {
-			throw new IllegalArgumentException("Card string must be length 2");
-		}
-		
-		if (!rankMap.containsKey(card.charAt(0))) {
-			throw new IllegalArgumentException("Invalid rank");
-		}
-		
-		if (!suitMap.containsKey(card.charAt(1))) {
-			throw new IllegalArgumentException("Invalid suit");
-		}
+		this.mask = mask;
 	}
 
+	@VisibleForTesting
+	OfcCard(String cardString) {
+		this.mask = Deck.parseCardMask(cardString);
+	}
+	
+	// actually this is the index from the right side
+	private int getIndex() {
+		return Long.numberOfTrailingZeros(mask);
+	}
+	
 	public int getRank() {
-		return rankMap.get(card.charAt(0));
+		switch (getIndex() % 13) {
+			case 0:
+				return Deck.RANK_2;
+			case 1:
+				return Deck.RANK_3;
+			case 2:
+				return Deck.RANK_4;
+			case 3:
+				return Deck.RANK_5;
+			case 4:
+				return Deck.RANK_6;
+			case 5:
+				return Deck.RANK_7;
+			case 6:
+				return Deck.RANK_8;
+			case 7:
+				return Deck.RANK_9;
+			case 8:
+				return Deck.RANK_TEN;
+			case 9:
+				return Deck.RANK_JACK;
+			case 10:
+				return Deck.RANK_QUEEN;
+			case 11:
+				return Deck.RANK_KING;
+			case 12:
+				return Deck.RANK_ACE;
+			default:
+				throw new IllegalStateException("No rank");
+		}
 	}
 	
 	public int getSuit() {
-		return suitMap.get(card.charAt(1));
+		switch (getIndex() / 13) {
+			case 0:
+				return Deck.SUIT_HEARTS;
+			case 1:
+				return Deck.SUIT_DIAMONDS;
+			case 2:
+				return Deck.SUIT_CLUBS;
+			case 3:
+				return Deck.SUIT_SPADES;
+			default:
+				throw new IllegalStateException("No suit");
+		}
 	}
 
 	public long getMask() {
-		return Deck.createCardMask(getRank(), getSuit());
+		return mask;
 	}
 	
+	
+	public String toString() {
+		return Deck.cardMaskString(mask);
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((card == null) ? 0 : card.hashCode());
+		result = prime * result + (int) (mask ^ (mask >>> 32));
 		return result;
 	}
 
@@ -82,17 +98,9 @@ public class OfcCard {
 		if (getClass() != obj.getClass())
 			return false;
 		OfcCard other = (OfcCard) obj;
-		if (card == null) {
-			if (other.card != null)
-				return false;
-		} else if (!card.equals(other.card))
+		if (mask != other.mask)
 			return false;
 		return true;
-	}
-
-	
-	public String toString() {
-		return card;
 	}
 	
 }

@@ -27,7 +27,7 @@ public class LongOfcHandTest extends CachedValueOfcHandTestCase {
 		
 		int[] ranks = new int[5];
 		int[] suits = new int[5];
-		LongOfcHand.convertForEval(hand.back, ranks, suits);
+		LongOfcHand.convertForEval(hand.back, ranks, suits, OfcHand.BACK_SIZE);
 
 		assertEquals(Deck.RANK_6, ranks[0]);
 		assertEquals(Deck.RANK_5, ranks[1]);

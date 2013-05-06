@@ -1,8 +1,3 @@
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-
 import org.pokersource.game.Deck;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -17,20 +12,22 @@ public class LongOfcHand extends CachedValueOfcHand {
 	long back;
 	
 	public LongOfcHand() {
+		super();
 		front = 0;
 		middle = 0;
 		back = 0;
 	}
 	
-	private LongOfcHand(long front, long middle, long back) {
-		this.front = front;
-		this.middle = middle;
-		this.back = back;
+	private LongOfcHand(LongOfcHand source) {
+		super(source);
+		this.front = source.front;
+		this.middle = source.middle;
+		this.back = source.back;
 	}
 	
 	@Override
-	public OfcHand copy() {
-		return new LongOfcHand(front, middle, back);
+	public LongOfcHand copy() {
+		return new LongOfcHand(this);
 	}
 
 	@Override
@@ -119,21 +116,13 @@ public class LongOfcHand extends CachedValueOfcHand {
 	 * Fill the ranks and suits arrays with the value of the hand.
 	 */
 	@VisibleForTesting
-	static void convertForEval(long mask, int[] ranks, int[] suits) {
-		long numCards = Long.bitCount(mask);
-		// TODO: be smarter about which hand we're checking
-		if (numCards != FRONT_SIZE &&  numCards != BACK_SIZE) {
+	static void convertForEval(long mask, int[] ranks, int[] suits, int numCards) {
+		if (numCards != Long.bitCount(mask)) {
 			throw new IllegalArgumentException("Hand isn't complete");
 		}
-		
-		int index = 0;
 
 		// NOTE: There's a hidden requirement here that the cards are sorted in descending order
-		for (String card : Deck.cardMaskString(mask).split(" ")) {
-			ranks[index] = Deck.parseRank(card.substring(0, 1));
-			suits[index] = Deck.parseSuit(card.substring(1, 2));
-			index++;
-		}
+		CardSetUtils.convertToArrays(mask, ranks, suits);
 	}
 	
 	@Override
@@ -142,9 +131,9 @@ public class LongOfcHand extends CachedValueOfcHand {
 			if (getFrontSize() != FRONT_SIZE) {
 				throw new IllegalStateException("Front not complete");
 			}
-			int[] ranks = new int[3];
-			int[] suits = new int[3];
-			convertForEval(front, ranks, suits);
+			int[] ranks = new int[FRONT_SIZE];
+			int[] suits = new int[FRONT_SIZE];
+			convertForEval(front, ranks, suits, FRONT_SIZE);
 			frontValue = StupidEval.eval3(ranks);
 		}
 		return frontValue;
@@ -156,9 +145,9 @@ public class LongOfcHand extends CachedValueOfcHand {
 			if (getMiddleSize() != MIDDLE_SIZE) {
 				throw new IllegalStateException("Middle not complete");
 			}
-			int[] ranks = new int[5];
-			int[] suits = new int[5];
-			convertForEval(middle, ranks, suits);
+			int[] ranks = new int[MIDDLE_SIZE];
+			int[] suits = new int[MIDDLE_SIZE];
+			convertForEval(middle, ranks, suits, MIDDLE_SIZE);
 			middleValue = StupidEval.eval(ranks, suits);
 		}
 		return middleValue;
@@ -170,9 +159,9 @@ public class LongOfcHand extends CachedValueOfcHand {
 			if (getBackSize() != BACK_SIZE) {
 				throw new IllegalStateException("Back not complete");
 			}
-			int[] ranks = new int[5];
-			int[] suits = new int[5];
-			convertForEval(back, ranks, suits);
+			int[] ranks = new int[BACK_SIZE];
+			int[] suits = new int[BACK_SIZE];
+			convertForEval(back, ranks, suits, BACK_SIZE);
 			backValue = StupidEval.eval(ranks, suits);
 		}
 		return backValue;

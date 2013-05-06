@@ -1,13 +1,9 @@
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 
 public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
@@ -19,22 +15,23 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 	public StupidOfcHand() {
 	}
 
+	// copy constructor
+	private StupidOfcHand(StupidOfcHand source) {
+		super(source);
+		for (OfcCard card : source.back) {
+			this.addBack(card);
+		}
+		for (OfcCard card : source.middle) {
+			this.addMiddle(card);
+		}
+		for (OfcCard card : source.front) {
+			this.addFront(card);
+		}
+	}
+	
 	@Override
 	public StupidOfcHand copy() {
-		StupidOfcHand hand = new StupidOfcHand();
-		for (OfcCard card : back) {
-			hand.addBack(card);
-		}
-		for (OfcCard card : middle) {
-			hand.addMiddle(card);
-		}
-		for (OfcCard card : front) {
-			hand.addFront(card);
-		}
-
-		super.copy(hand);
-
-		return hand;
+		return new StupidOfcHand(this);
 	}
 		
 	/* (non-Javadoc)
@@ -184,10 +181,6 @@ public class StupidOfcHand extends CachedValueOfcHand implements OfcHand {
 		Collections.<OfcCard>sort(hand, new Comparator<OfcCard>() {
 			public int compare(OfcCard first, OfcCard second) {
 				return second.getRank() - first.getRank();
-			}
-			
-			public boolean equals(Object o) {
-				return false;
 			}
 		});
 				
