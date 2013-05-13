@@ -110,9 +110,42 @@ public abstract class OfcHandTestCase extends TestCase {
 		hand1.addBack(new OfcCard("Th"));
 		assertTrue(hand1.isComplete());
 	}
+
+	public void testBackMustBeatMiddle() {
+		addFront1("2c");
+		addFront1("3c");
+		addFront1("4c");
+		
+		addMiddle1("Ad");
+		addMiddle1("Kd");
+		addMiddle1("4d");
+		addMiddle1("3d");
+		addMiddle1("2d");
+		
+		addBack1("As");
+		addBack1("Ks");
+		addBack1("4s");
+		addBack1("3s");
+		addBack1("2s");
+		
+		assertTrue(hand1.isFouled());
+	}
 	
 	// TODO: many more tests, especially for scoring
 	public void testFouled() {
 		
+	}
+
+	// too lazy to type
+	private void addFront1(String card) {
+		hand1.addFront(new OfcCard(card));
+	}
+
+	private void addMiddle1(String card) {
+		hand1.addMiddle(new OfcCard(card));
+	}
+	
+	private void addBack1(String card) {
+		hand1.addBack(new OfcCard(card));
 	}
 }

@@ -82,6 +82,6 @@ public abstract class CachedValueOfcHandTestCase extends OfcHandTestCase {
 		
 		CachedValueOfcHand copy = (CachedValueOfcHand) cHand1.copy();
 		assertEquals(middleValue, copy.middleValue);
-		
 	}
+
 }

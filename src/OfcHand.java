@@ -23,14 +23,21 @@ public interface OfcHand {
 	Set<OfcHand> generateHands(OfcCard card);
 
 	void addBack(OfcCard card);
-
 	void addMiddle(OfcCard card);
-
 	void addFront(OfcCard card);
 
 	int getBackSize();
 	int getMiddleSize();
 	int getFrontSize();
+	
+	long getFrontRank();
+	long getMiddleRank();
+	long getBackRank();
+
+	// These really are just for LongOfcHand and don't belong in the interface
+	long getBackMask();
+	long getMiddleMask();
+	long getFrontMask();
 	
 	boolean isComplete();
 
@@ -42,12 +49,6 @@ public interface OfcHand {
 	int getRoyaltyValue();
 
 	int scoreAgainst(OfcHand other);
-
-	long getFrontRank();
-
-	long getMiddleRank();
-
-	long getBackRank();
 
 	int getStreet();
 }

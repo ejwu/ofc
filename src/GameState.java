@@ -22,6 +22,18 @@ public class GameState {
 		CacheBuilder.newBuilder().concurrencyLevel(2)
 			.maximumSize(50000L)
 			.recordStats().build();
+
+	// bit mask for the full deck, used for checking that a state is valid
+	private static final long FULL_DECK_MASK;
+	
+	static {
+		long fullDeck = 0L;
+		for (int i = 0; i < 52; i++) {
+			fullDeck <<= 1;
+			fullDeck |= 1L;
+		}
+		FULL_DECK_MASK = fullDeck;
+	}
 	
 	// instrumentation
 	private static AtomicLong statesGenerated = new AtomicLong(0L);
@@ -42,6 +54,13 @@ public class GameState {
 		if (player1.getStreet() != player2.getStreet() &&
 			player1.getStreet() != player2.getStreet() - 1) {
 			throw new IllegalStateException("Player 1 must be on same or previous street as player 2");
+		}
+		
+		// Don't permit any dead cards.  We'd like game states to be normalized so that any 2 of {player1, player2, deck}
+		// define the state.
+		if (FULL_DECK_MASK != (player1.getBackMask() ^ player1.getMiddleMask() ^ player1.getFrontMask() ^
+				player2.getBackMask() ^ player2.getMiddleMask() ^ player2.getFrontMask() ^ deck.getMask())) {
+			throw new IllegalStateException("Hands + deck != full deck");
 		}
 	}
 	

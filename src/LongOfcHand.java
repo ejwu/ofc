@@ -44,6 +44,22 @@ public class LongOfcHand extends CachedValueOfcHand {
 	public int getFrontSize() {
 		return Long.bitCount(front);
 	}
+
+	@Override
+	public long getBackMask() {
+		return back;
+	}
+	
+	@Override
+
+	public long getMiddleMask() {
+		return middle;
+	}
+	
+	@Override
+	public long getFrontMask() {
+		return front;
+	}
 	
 	@Override
 	public void addBack(OfcCard card) {

@@ -1,5 +1,7 @@
 
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import junit.framework.TestCase;
@@ -22,13 +24,33 @@ public class StupidEvalTest extends TestCase {
 		return StupidEval.eval(ranks, suits);
 	}
 	
+	private static void convertForEval(List<OfcCard> hand, int[] ranks, int[] suits) {
+		Collections.<OfcCard>sort(hand, new Comparator<OfcCard>() {
+			public int compare(OfcCard first, OfcCard second) {
+				return second.getRank() - first.getRank();
+			}
+		});
+
+		// TODO: be smarter about which hand we're checking
+		if (hand.size() != OfcHand.FRONT_SIZE && hand.size() != OfcHand.BACK_SIZE) {
+			throw new IllegalArgumentException("Hand isn't complete");
+		}
+
+		int index = 0;
+		for (OfcCard card : hand) {
+			ranks[index] = card.getRank();
+			suits[index] = card.getSuit();
+			index++;
+		}
+	}
+	
 	// space delimited hand
 	private void makeHand(String handString) {
 		hand.clear();
 		for (String card : handString.split(" ")) {
 			hand.add(new OfcCard(card));
 		}
-		StupidOfcHand.convertForEval(hand, ranks, suits);
+		convertForEval(hand, ranks, suits);
 	}
 	
 	private long evalHand(String handString) {

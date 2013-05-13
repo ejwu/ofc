@@ -28,7 +28,7 @@ public abstract class CachedValueOfcHand implements OfcHand {
 	
 	protected void completeBack() {
 		backValue = getBackRank();
-		if (middleValue != UNSET && backValue < middleValue) {
+		if (middleValue != UNSET && backValue <= middleValue) {
 			willBeFouled = true;
 		}
 		if (frontValue != UNSET && backValue < frontValue) {
@@ -41,7 +41,7 @@ public abstract class CachedValueOfcHand implements OfcHand {
 		if (frontValue != UNSET && middleValue < frontValue) {
 			willBeFouled = true;
 		}
-		if (backValue != UNSET && backValue < middleValue) {
+		if (backValue != UNSET && backValue <= middleValue) {
 			willBeFouled = true;
 		}
 	}
