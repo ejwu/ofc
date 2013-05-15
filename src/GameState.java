@@ -1,5 +1,12 @@
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -7,21 +14,33 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ConcurrentHashMultiset;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 
 public class GameState {
 	
-	ExecutorService executor = Executors.newFixedThreadPool(4);
-
-	private static final Cache<GameState, Double> cache =
-		CacheBuilder.newBuilder().concurrencyLevel(2)
-			.maximumSize(50000L)
-			.recordStats().build();
+	ExecutorService executor = Executors.newCachedThreadPool();
+	
+	private static final File CACHE_FILE;
+	
+	private static final LoadingCache<GameState, Double> cache =
+		CacheBuilder.newBuilder().concurrencyLevel(8)
+			.maximumSize(3000000L)
+			.recordStats()
+			.build(new CacheLoader<GameState, Double>() {
+				public Double load(GameState state) {
+					return state.calculateValue();
+				}
+			});
+			
 
 	// bit mask for the full deck, used for checking that a state is valid
 	private static final long FULL_DECK_MASK;
@@ -33,14 +52,47 @@ public class GameState {
 			fullDeck |= 1L;
 		}
 		FULL_DECK_MASK = fullDeck;
+		
+		CACHE_FILE = new File("cache.txt");
+		if (!CACHE_FILE.exists()) {
+			try {
+				CACHE_FILE.createNewFile();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		long timestamp = System.currentTimeMillis();
+		BufferedReader reader = null;
+		try {
+			reader = new BufferedReader(new FileReader("cache.txt"));
+			String s = reader.readLine();
+			while (s != null) {
+				System.out.println(s);
+				if (!s.trim().isEmpty()) {
+					cache.put(fromFileString(s), getValueFromFileString(s));
+				}
+				s = reader.readLine();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			System.out.println(cache.stats());
+			try {
+				reader.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		System.out.println("load from file took " + (System.currentTimeMillis() - timestamp));
 	}
 	
 	// instrumentation
-	private static AtomicLong statesGenerated = new AtomicLong(0L);
+	private static AtomicLong statesSolved = new AtomicLong(0L);
 	private static AtomicLong counter = new AtomicLong(0L);
 	private static final long startTime = System.currentTimeMillis();
 	private static long timestamp = 0L;
-	private static final Multiset<Double> streetStatesGenerated = ConcurrentHashMultiset.create();
+	private static final Multiset<Double> statesSolvedByStreet = ConcurrentHashMultiset.create();
 		
 	// The current player
 	OfcHand player1;
@@ -66,179 +118,229 @@ public class GameState {
 	
 	private String getInstrumentation() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(statesGenerated.longValue() + "\n");
+		sb.append(statesSolved.longValue() + "\n");
 		long newTime = System.currentTimeMillis();
 		sb.append("total time: " + (newTime - startTime) / 1000 + " seconds \n");
 		sb.append("since last time: " + (newTime - timestamp) + " ms\n");
 		timestamp = newTime;
-		Double[] streets = streetStatesGenerated.elementSet().toArray(new Double[0]);
+		Double[] streets = statesSolvedByStreet.elementSet().toArray(new Double[0]);
 		Arrays.sort(streets);
 		for (Double street : streets) {
-			sb.append(street + ": " + streetStatesGenerated.count(street) + "\n");
+			sb.append(street + ": " + statesSolvedByStreet.count(street) + "\n");
 		}
-//		sb.append("cache hits/misses/size: " + cacheHits + " " + cacheMisses + " " + cache.size() + "\n");
 		sb.append(cache.stats() + "\n");
 		return sb.toString();
 	}
 	
 	/**
-	 * Generate best states reachable from this state..
-	 * The next states will be from the perspective of the opponent.
+	 * Generate the value of each best state reachable from this one, i.e., optimal setting for each card.
 	 */
-	public Set<GameState> generateBestStates() {
+	private Map<GameState, Double> generateBestStateValues() {
 		if (player1.isComplete()) {
-			throw new IllegalStateException("Shouldn't generate new states for a complete hand");
+			throw new IllegalStateException("Shouldn't generate new states for complete hand");
 		}
-		Set<GameState> newStates = Sets.newHashSet();
+		Map<GameState, Double> bestStates = Maps.newHashMap();
 		for (OfcCard card : CardSetUtils.asCards(deck.getMask())) {
 			// TODO: Double.MIN_VALUE doesn't compare properly.
-			double handSettingValue = -1000000000.0;
 			GameState bestSet = null;
+			double bestValue = -1000000000000.0;
 
 			Set<OfcHand> hands = player1.generateHands(card);
 			for (OfcHand hand : hands) {
 				GameState candidateState = new GameState(player2, hand, new OfcDeck(deck.withoutCard(card)));
-				if (hands.size() == 1) {
-					// Save the effort of finding the best setting when there's only one possible set
+				double value = candidateState.getValue();
+				// candidateState's value is from the opponent's perspective, so we flip it
+				if (value * -1 > bestValue) {
 					bestSet = candidateState;
-				} else if (candidateState.getValue() > handSettingValue) {
-					handSettingValue = candidateState.getValue();
-					bestSet = candidateState;
+					bestValue = value * -1;
 				}
 			}
-			if (bestSet != null) {
-				newStates.add(bestSet);
+			// shouldn't happen
+			if (bestStates.containsKey(bestSet)) {
+				throw new IllegalStateException("what happened?");
 			}
+			bestStates.put(bestSet, bestValue);
 		}
-		if (!newStates.isEmpty()) {
-			statesGenerated.addAndGet(newStates.size());
-			counter.addAndGet(newStates.size());
-			streetStatesGenerated.add(newStates.iterator().next().getStreet(), newStates.size());
+
+		if (!bestStates.isEmpty()) {
+			statesSolved.addAndGet(bestStates.size());
+			counter.addAndGet(bestStates.size());
+			statesSolvedByStreet.add(bestStates.keySet().iterator().next().getStreet(), bestStates.size());
 			if (counter.longValue() > 10000) {
 				counter.set(0L);
 				System.out.println(getInstrumentation());
 			}
+		} else {
+			throw new IllegalStateException("never happen");
 		}
-//		System.out.println("adding states for street: " + getStreet() + newStates);
-		return newStates;
-	}
 
+		// sanity check
+		if (bestStates.size() > (52 * 3)) {
+			throw new IllegalStateException("shouldn't happen");
+		}
+		
+		return bestStates;
+	}
+	
 	public boolean isComplete() {
 		return player1.isComplete() && player2.isComplete();
 	}
 	
-	// all states reachable from this state, without choosing optimal hand setting
-/*
-	private Set<GameState> generateAllStates() {
-		if (player1.isComplete()) {
-			throw new IllegalStateException("Shouldn't generate new states for a complete hand");
-		}
-		Set<GameState> newStates = Sets.newHashSet();
-		for (String card : deck.allCards()) {
-			Set<OfcHand> hands = player1.generateHands(new OfcCard(card));
-			for (OfcHand hand : hands) {
-				GameState candidateState = new GameState(player2, hand, new OfcDeck(deck.withoutCard(card)));
-			}
-		}
-		return newStates;
-	}
-*/
 	/**
 	 * Get the value of this state for the first player.  If the game is complete, this is the score.
 	 * Otherwise, it is the average of all states generated by dealing the opponent a card.
 	 */
 	public double getValue() {
-
-		Double value = cache.getIfPresent(this);
-		if (value != null) {
-//			System.out.println(cache.stats());
-			return value;
-		}
-
-		// 13th street, no more choices		
-		if (getStreet() == 13.0) {
-			int count = 0;
-			double sum = 0.0;
-			for (OfcCard p1Card : CardSetUtils.asCards(deck.getMask())) {
-				Set<OfcHand> p1Hands = player1.generateHands(p1Card);
-				if (p1Hands.size() != 1) {
-					throw new IllegalStateException("should only generate one hand");
-				}
-				OfcHand p1Hand = p1Hands.iterator().next();
-				for (OfcCard p2Card : CardSetUtils.asCards(deck.withoutCard(p1Card))) {
-//				for (String p2Card : new OfcDeck(deck.withoutCard(p1Card)).allCards()) {
-					Set<OfcHand> p2Hands = player2.generateHands(p2Card);
-					if (p2Hands.size() != 1) {
-						throw new IllegalStateException("should only generate one hand");
-					}
-					OfcHand p2Hand = p2Hands.iterator().next();
-					count++;
-					sum += p1Hand.scoreAgainst(p2Hand);
-				}
-			}
-//			System.out.println(count + " " + sum + " " + sum/count);
-//			System.out.println(this);
-			cache.put(this,  sum / count);
-			return sum / count;
-		}
-		
 		if (getStreet() > 13.0) {
 			throw new IllegalStateException("never happen");
 		}
-		if (!isComplete()) {
-			double sum = 0.0;
-			int count = 0;
-			List<Future<Double>> results = Lists.newArrayList();
-			for (final GameState nextState : generateBestStates()) {
-				results.add(executor.submit(new Callable<Double>() {
-					@Override
-					public Double call() throws Exception {
-						return nextState.getValue();
-					}					
-				}));				
-			}
-			
-			for (Future<Double> result : results) {
-				try {
-					sum += result.get();
-					count++;
-				} catch (Exception e) {
-					throw new RuntimeException("oh, this is bad");
-				}
-			}
-			
-			if (getStreet() < 11.5) {
-				System.out.println("\n\nSolved");
-				System.out.println(this);
-				System.out.println(sum / count * -1);
-				System.out.println(getInstrumentation());
-			}
-			
-			/*
-			if (cache.containsKey(this)) {
-				// okay, maybe two threads inserted into the cache simultaneously
-				if (cache.get(this) != sum / count * -1) {
-					throw new IllegalStateException("Different value in cache (" + cache.get(this) + "): "
-						+ ( sum / count * -1) + " " + this);
-				}
-			} else {
-				cache.put(this, sum / count * -1);
-			}
-			*/
-			cache.put(this,  sum / count * -1);
-			// Current player's value is the negative of the opponent's value.
-			return sum / count * -1;
+
+		Double value = cache.getUnchecked(this);
+		if (value != null) {
+			return value;
+		}
+		return calculateValue();
+	}
+	
+	/**
+	 * Calculate the value when it's not available in the cache
+	 */
+	private double calculateValue() {
+		// 13th street, no more choices		
+		if (getStreet() == 13.0) {
+			return calculate13thStreet();
 		}
 
-		// this should never happen either
-		throw new IllegalStateException();
+		double value;
+		value = getValueSequential();
+			
+		if (getStreet() < 12.0) {
+			System.out.println("\n\nSolved");
+			System.out.println(this);
+			System.out.println(value);
+			System.out.println(getInstrumentation());
+			
+			try {
+				FileWriter fw = new FileWriter(CACHE_FILE.getAbsoluteFile(), true);
+				BufferedWriter bw = new BufferedWriter(fw);
+				bw.write(toFileString() + " " + value + "\n");
+				bw.flush();
+				bw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+				// can't do much, oh well
+			}
+		}
+
+		// TODO: be smarter about cache policy
+		cache.put(this, value);
+		return value;
+	}
+
+	private double calculate13thStreet() {
+		int count = 0;
+		double sum = 0.0;
+		for (OfcCard p1Card : CardSetUtils.asCards(deck.getMask())) {
+			Set<OfcHand> p1Hands = player1.generateHands(p1Card);
+			if (p1Hands.size() != 1) {
+				throw new IllegalStateException("should only generate one hand");
+			}
+			// TODO: just a wonky way to get a single hand, maybe mess with generateHands 
+			OfcHand p1Hand = p1Hands.iterator().next();
+			for (OfcCard p2Card : CardSetUtils.asCards(deck.withoutCard(p1Card))) {
+				Set<OfcHand> p2Hands = player2.generateHands(p2Card);
+				if (p2Hands.size() != 1) {
+					throw new IllegalStateException("should only generate one hand");
+				}
+				// TODO: just a wonky way to get a single hand, maybe mess with generateHands 
+				OfcHand p2Hand = p2Hands.iterator().next();
+				count++;
+				sum += p1Hand.scoreAgainst(p2Hand);
+			}
+		}
+		double value = sum / count;
+		
+		cache.put(this, value);
+		return value;
+	}
+
+	public double getValueSequential() {
+		double sum = 0.0;
+		int count = 0;
+		
+		Map<GameState, Double> bestStates = generateBestStateValues();
+		
+		for (GameState state : bestStates.keySet()) {
+			count++;
+			sum += bestStates.get(state);
+		}
+		
+		// Current player's value is the negative of the opponent's value.
+		return sum / count;
+	}
+/*	
+	public double getValueConcurrent() {
+		double sum = 0.0;
+		int count = 0;
+		List<Future<Double>> results = Lists.newArrayList();
+		for (final GameState nextState : generateBestStates()) {
+			results.add(executor.submit(new Callable<Double>() {
+				@Override
+				public Double call() throws Exception {
+					return nextState.getValue();
+				}					
+			}));				
+		}
+		
+		for (Future<Double> result : results) {
+			try {
+				sum += result.get();
+				count++;
+			} catch (Exception e) {
+				throw new RuntimeException("oh, this is bad");
+			}
+		}
+
+		// Current player's value is the negative of the opponent's value.
+		return sum / count * -1;
+	}
+*/
+	private String toFileString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(getStreet());
+		sb.append(" ");
+		sb.append(player1.toKeyString());
+		sb.append(" ");
+		sb.append(player2.toKeyString());
+		
+		return sb.toString();
+	}
+	
+	@VisibleForTesting
+	static GameState fromFileString(String fileString) {
+		String[] splitString = fileString.split(" ");
+
+		OfcHand p1 = LongOfcHand.fromKeyString(splitString[1]);
+		OfcHand p2 = LongOfcHand.fromKeyString(splitString[2]);
+		
+		return new GameState(p1, p2, new OfcDeck(deriveDeck(p1, p2)));
+	}
+	
+	@VisibleForTesting
+	static double getValueFromFileString(String fileString) {
+		String[] splitString = fileString.split(" ");
+		return Double.parseDouble(splitString[3]);
+	}
+	
+	@VisibleForTesting
+	static long deriveDeck(OfcHand p1, OfcHand p2) {
+		return ~(~FULL_DECK_MASK | p1.getFrontMask() | p1.getMiddleMask() | p1.getBackMask()
+					| p2.getFrontMask() | p2.getMiddleMask() | p2.getBackMask());
 	}
 	
 	public double getStreet() {
 		return (player1.getStreet() + player2.getStreet()) / 2.0;
 	}
-	
-
 	
 	@Override
 	public int hashCode() {

@@ -28,7 +28,7 @@ public class OfcSolver {
 
 		player1.addBack(deck.removeCard("Ah"));
 		player1.addBack(deck.removeCard("Jh"));
-		player1.addBack(deck.removeCard("Jd"));
+//		player1.addBack(deck.removeCard("Jd"));
 		player1.addBack(deck.removeCard("Ad"));
 		
 		OfcHand player2 = new LongOfcHand();

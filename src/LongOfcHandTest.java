@@ -41,4 +41,23 @@ public class LongOfcHandTest extends CachedValueOfcHandTestCase {
 		assertEquals(Deck.SUIT_CLUBS, suits[3]);
 		assertEquals(Deck.SUIT_CLUBS, suits[4]);
 	}
+	
+	public void testKeyString() {
+		addFront1("2c");
+		addFront1("4c");
+		addFront1("8d");
+		
+		addMiddle1("7c");
+		addMiddle1("7h");
+		addMiddle1("Ac");
+		
+		addBack1("Kh");
+		addBack1("Ah");
+		addBack1("Qh");
+		addBack1("2h");
+		
+		String keyString = cHand1.toKeyString();
+		LongOfcHand from = LongOfcHand.fromKeyString(keyString);
+		assertEquals(cHand1, from);
+	}
 }

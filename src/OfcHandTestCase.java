@@ -137,15 +137,15 @@ public abstract class OfcHandTestCase extends TestCase {
 	}
 
 	// too lazy to type
-	private void addFront1(String card) {
+	protected void addFront1(String card) {
 		hand1.addFront(new OfcCard(card));
 	}
 
-	private void addMiddle1(String card) {
+	protected void addMiddle1(String card) {
 		hand1.addMiddle(new OfcCard(card));
 	}
 	
-	private void addBack1(String card) {
+	protected void addBack1(String card) {
 		hand1.addBack(new OfcCard(card));
 	}
 }

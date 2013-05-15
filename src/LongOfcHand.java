@@ -1,6 +1,7 @@
 import org.pokersource.game.Deck;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 
 public class LongOfcHand extends CachedValueOfcHand {
 
@@ -60,7 +61,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 	public long getFrontMask() {
 		return front;
 	}
-	
+
 	@Override
 	public void addBack(OfcCard card) {
 		if (getBackSize() >= BACK_SIZE) {
@@ -188,6 +189,50 @@ public class LongOfcHand extends CachedValueOfcHand {
 		return getFrontSize() + getMiddleSize() + getBackSize() + 1;
 	}
 
+	@Override
+	public String toKeyString() {
+		StringBuilder sb = new StringBuilder();
+/*
+		sb.append(Strings.padStart(Long.toHexString(front), 16, '0'));
+		sb.append("-");
+		sb.append(Strings.padStart(Long.toHexString(middle), 16, '0'));
+		sb.append("-");
+		sb.append(Strings.padStart(Long.toHexString(back), 16, '0'));
+*/
+		sb.append(Deck.cardMaskString(front, ""));
+		sb.append("-");
+		sb.append(Deck.cardMaskString(middle, ""));
+		sb.append("-");
+		sb.append(Deck.cardMaskString(back, ""));
+		
+		
+		return sb.toString();
+	}
+
+	public static LongOfcHand fromKeyString(String s) {
+		String[] hands = s.split("-");
+		if (hands.length != 3) {
+			throw new IllegalArgumentException("format incorrect");
+		}
+		LongOfcHand hand = new LongOfcHand();
+		int index = 0;
+		while (index < hands[0].length()) {
+			hand.addFront(new OfcCard(hands[0].substring(index, index + 2)));
+			index += 2;
+		}
+		index = 0;
+		while (index < hands[1].length()) {
+			hand.addMiddle(new OfcCard(hands[1].substring(index, index + 2)));
+			index += 2;
+		}
+		index = 0;
+		while (index < hands[2].length()) {
+			hand.addBack(new OfcCard(hands[2].substring(index, index + 2)));
+			index += 2;
+		}
+		return hand;
+	}
+	
 	private String maskToString(long mask) {
 		if (mask == 0) {
 			return "[]\n";

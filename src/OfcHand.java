@@ -51,4 +51,9 @@ public interface OfcHand {
 	int scoreAgainst(OfcHand other);
 
 	int getStreet();
+	
+	/**
+	 * Convert this hand to a less human readable but more compact string for storage purposes.
+	 */
+	String toKeyString();
 }
