@@ -1,17 +1,9 @@
 
 public class OfcSolver {
-//spurious
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-//		System.out.println(System.mapLibraryName("poker"));
-//		System.load("/cygdrive/c/Users/ejwu/Desktop/workspace/ofc/poker.dll");
-//	System.out.println(System.getProperty("java.library.path"));
-//		System.loadLibrary("poker");
-		
 		OfcDeck deck = new OfcDeck();
 		deck.initialize();
 		
@@ -46,7 +38,7 @@ public class OfcSolver {
 		player2.addBack(deck.removeCard("Ts"));
 		player2.addBack(deck.removeCard("Kd"));
 		player2.addBack(deck.removeCard("Ks"));
-		player2.addBack(deck.removeCard("2s"));
+//		player2.addBack(deck.removeCard("2s"));
 
 		
 		/*	

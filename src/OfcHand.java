@@ -9,6 +9,8 @@ public interface OfcHand {
 	public static final int MIDDLE_SIZE = 5;
 	public static final int FRONT_SIZE = 3;
 
+	public static final int FANTASYLAND_VALUE = 12;
+
 	static final Map<Long, Integer> backRoyaltyMap = ImmutableMap.<Long, Integer>builder()
 			.put(StupidEval.STRAIGHT, 2)
 			.put(StupidEval.FLUSH, 4)
@@ -47,8 +49,9 @@ public interface OfcHand {
 	boolean isFouled();
 
 	int getRoyaltyValue();
-
-	int scoreAgainst(OfcHand other);
+	int getFantasylandValue();
+	
+	Score scoreAgainst(OfcHand other);
 
 	int getStreet();
 	

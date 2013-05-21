@@ -19,6 +19,10 @@ public class StupidEval {
 	public static final long PAIR_CONSTANT =             10000000000000L;
 	private static final long KICKER_START_MULTIPLIER =     100000000000L;
 	private static final long KICKER_DIVISOR = 100L;
+
+	// TODO: so very very sketchy
+	public static final long FANTASYLAND_THRESHOLD =
+		eval3(new int[] {Deck.RANK_QUEEN, Deck.RANK_QUEEN, Deck.RANK_2});
 	
 	// OfcHand is dependent on implementation details here, don't mess with them
 	public static long eval3(int[] ranks) {

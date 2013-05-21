@@ -96,8 +96,16 @@ public abstract class CachedValueOfcHand implements OfcHand {
 				value += rank - 4;
 			}
 		}
-		
+	
 		return value;
+	}
+
+	@Override
+	public int getFantasylandValue() {
+		if (getFrontRank() > StupidEval.FANTASYLAND_THRESHOLD) {
+			return FANTASYLAND_VALUE;
+		}
+		return 0;
 	}
 	
 	/*
@@ -105,18 +113,21 @@ public abstract class CachedValueOfcHand implements OfcHand {
 	 * @see OfcHand#scoreAgainst(OfcHand)
 	 */
 	@Override
-	public int scoreAgainst(OfcHand other) {
+	public Score scoreAgainst(OfcHand other) {
 		if (!isComplete() || !other.isComplete()) {
 			throw new IllegalArgumentException("Can only compare complete hands");
 		}
+		
 		if (isFouled()) {
 			if (other.isFouled()) {
-				return 0;
+				return Score.ZERO;
 			}
-			return -6 - other.getRoyaltyValue();
+			int score = -6 - other.getRoyaltyValue();
+			return new Score(score, score - other.getFantasylandValue());
 		}
 		if (other.isFouled()) {
-			return 6 + getRoyaltyValue();
+			int score = 6 + getRoyaltyValue();
+			return new Score(score, getFantasylandValue());
 		}
 		int wins = 0;
 		if (getBackRank() > other.getBackRank()) {
@@ -129,18 +140,26 @@ public abstract class CachedValueOfcHand implements OfcHand {
 			wins++;
 		}
 		
+		int score = getRoyaltyValue() - other.getRoyaltyValue();
+		int flValue = getFantasylandValue() - other.getFantasylandValue();
 		switch (wins) {
 			case 0:
-				return -6 + getRoyaltyValue() - other.getRoyaltyValue();
+				score -= 6;
+				break;
 			case 1:
-				return -1 + getRoyaltyValue() - other.getRoyaltyValue();
+				score -= 1;
+				break;
 			case 2:
-				return 1 + getRoyaltyValue() - other.getRoyaltyValue();
+				score += 1;
+				break;
 			case 3:
-				return 6 + getRoyaltyValue() - other.getRoyaltyValue();
+				score += 6;
+				break;
 			default:
 				throw new IllegalStateException("wtf");
 		}
+		return new Score(score, score + flValue);
+
 	}
 	
 	/*
