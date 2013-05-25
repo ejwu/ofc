@@ -17,8 +17,17 @@ public interface OfcHand {
 			.put(StupidEval.FULL_HOUSE, 6)
 			.put(StupidEval.QUADS, 8)
 			.put(StupidEval.STRAIGHT_FLUSH, 10)
+			.put(StupidEval.ROYAL_FLUSH, 20)
+			.build();
+
+	static final Map<Long, Integer> backRoyaltyMap2 = ImmutableMap.<Long, Integer>builder()
+			.put(StupidEval.STRAIGHT, 2)
+			.put(StupidEval.FLUSH, 4)
+			.put(StupidEval.FULL_HOUSE, 6)
+			.put(StupidEval.QUADS, 10)
+			.put(StupidEval.STRAIGHT_FLUSH, 15)
 			.put(StupidEval.ROYAL_FLUSH, 25)
-			.build();	
+			.build();
 	
 	OfcHand copy();
 
