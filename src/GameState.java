@@ -8,25 +8,23 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ConcurrentHashMultiset;
-import com.google.common.collect.Lists;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Table;
+import com.sun.xml.internal.bind.v2.TODO;
 
 public class GameState {
-	
+	/*
 	private static final ExecutorService executor = Executors.newCachedThreadPool();
 	
 	private static final File CACHE_FILE;
@@ -51,7 +49,7 @@ public class GameState {
 						return state.calculateValue();
 					}
 				});
-
+*/
 	// bit mask for the full deck, used for checking that a state is valid
 	private static final long FULL_DECK_MASK;
 	
@@ -62,7 +60,7 @@ public class GameState {
 			fullDeck |= 1L;
 		}
 		FULL_DECK_MASK = fullDeck;
-		
+	/*	
 		CACHE_FILE = new File("cache.txt");
 		if (!CACHE_FILE.exists()) {
 			try {
@@ -113,6 +111,7 @@ public class GameState {
 			}
 		}
 		System.out.println("load from file took " + (System.currentTimeMillis() - timestamp));
+*/
 	}
 	
 	// instrumentation
@@ -156,67 +155,60 @@ public class GameState {
 		for (Double street : streets) {
 			sb.append(street + ": " + statesSolvedByStreet.count(street) + "\n");
 		}
-		sb.append(cache.stats() + "\n");
-		sb.append(flcache.stats() + "\n");
+//		sb.append(cache.stats() + "\n");
+//		sb.append(flcache.stats() + "\n");
 		return sb.toString();
 	}
 	
+	
+	
+	
 	/**
 	 * Generate the value of each best state reachable from this one, i.e., optimal setting for each card.
+	 * If a state is the best setting for any scorer, it will be returned.
 	 */
-	private Map<GameState, Double> generateBestStateValues(boolean concurrent) {
+	private Table<String, GameState, Double> generateBestStateValues(List<Scorers.Scorer> scorers) {
 		if (player1.isComplete()) {
 			throw new IllegalStateException("Shouldn't generate new states for complete hand");
 		}
-		Map<GameState, Double> bestStates = Maps.newHashMap();
+
+		Table<String, GameState, Double> table = HashBasedTable.create();
+		
+		table needs card as an index too
+		
 		for (OfcCard card : CardSetUtils.asCards(deck.getMask())) {
 			// TODO: Double.MIN_VALUE doesn't compare properly.
 			GameState bestSet = null;
 			double bestValue = -1000000000000.0;
-
-			GameState bestFlSet = null;
-			double bestFlValue = -1000000000000.0;
 			
 			Set<OfcHand> hands = player1.generateHands(card);
 			for (OfcHand hand : hands) {
 				GameState candidateState = new GameState(player2, hand, new OfcDeck(deck.withoutCard(card)));
-				Score score = candidateState.getValue();
-				// candidateState's value is from the opponent's perspective, so we flip it
-				if (score.getBoring() * -1 > bestValue) {
-					bestSet = candidateState;
-					bestValue = score.getBoring() * -1;
+				Map<String, Double> scores = candidateState.getValue(scorers);
+				for (Scorers.Scorer scorer : scorers) {
+					// Score is from opponent's perspective, so we flip it
+					table.put(scorer.getCacheFile(), candidateState, scores.get(scorer.getCacheFile()) * -1);
 				}
 				
-				if (score.getFantasyland() * -1 > bestFlValue) {
-					bestFlSet = candidateState;
-					bestFlValue = score.getFantasyland() * -1;
-				}
+				// it would be nice to filter out hopeless settings here
+				
 			}
-			// shouldn't happen
-			if (bestStates.containsKey(bestSet)) {
-				throw new IllegalStateException("what happened?");
-			}
-			bestStates.put(bestSet, bestValue);
 		}
 
-		if (!bestStates.isEmpty()) {
-			statesSolved.addAndGet(bestStates.size());
-			counter.addAndGet(bestStates.size());
-			statesSolvedByStreet.add(bestStates.keySet().iterator().next().getStreet(), bestStates.size());
-			if (counter.longValue() > 10000) {
-				counter.set(0L);
-				System.out.println(getInstrumentation());
-			}
-		} else {
-			throw new IllegalStateException("never happen");
+		statesSolved.addAndGet(table.columnKeySet().size());
+		counter.addAndGet(table.columnKeySet().size());
+		statesSolvedByStreet.add(table.columnKeySet().iterator().next().getStreet(), table.columnKeySet().size());
+		if (counter.longValue() > 10000) {
+			counter.set(0L);
+			System.out.println(getInstrumentation());
 		}
 
 		// sanity check
-		if (bestStates.size() > (52 * 3)) {
+		if (table.columnKeySet().size() > (52 * 3 * scorers.size())) {
 			throw new IllegalStateException("shouldn't happen");
 		}
 		
-		return bestStates;
+		return table;
 	}
 	
 	public boolean isComplete() {
@@ -227,37 +219,37 @@ public class GameState {
 	 * Get the value of this state for the first player.  If the game is complete, this is the score.
 	 * Otherwise, it is the average of all states generated by dealing the opponent a card.
 	 */
-	public Score getValue() {
+	public Map<String, Double> getValue(List<Scorers.Scorer> scorers) {
 		if (getStreet() > 13.0) {
 			throw new IllegalStateException("never happen");
 		}
-
+/*
 		Double value = cache.getUnchecked(this);
 		Double flvalue = flcache.getUnchecked(this);
 		if (value != null && flvalue != null) {
 			return new Score(value, flvalue);
 		}
-		return calculateValue();
+*/
+		return calculateValue(scorers);
 	}
 	
 	/**
 	 * Calculate the value when it's not available in the cache
 	 */
-	private Score calculateValue() {
+	private Map<String, Double> calculateValue(List<Scorers.Scorer> scorers) {
 		// 13th street, no more choices		
 		if (getStreet() == 13.0) {
-			return calculate13thStreet();
+			return calculate13thStreet(scorers);
 		}
 
-		double value;
-		value = getValueSequential();
+		Map<String, Double> values = getValueSequential(scorers);
 			
 		if (getStreet() < 12.0) {
 			System.out.println("\n\nSolved");
 			System.out.println(this);
-			System.out.println(value);
+			System.out.println(values);
 			System.out.println(getInstrumentation());
-			
+			/*
 			try {
 				FileWriter fw = new FileWriter(CACHE_FILE.getAbsoluteFile(), true);
 				BufferedWriter bw = new BufferedWriter(fw);
@@ -268,17 +260,18 @@ public class GameState {
 				e.printStackTrace();
 				// can't do much, oh well
 			}
+			*/
 		}
 
 		// TODO: be smarter about cache policy
-		cache.put(this, value);
-		return value;
+//		cache.put(this, value);
+		return values;
 	}
 
-	private Score calculate13thStreet() {
+	private Map<String, Double> calculate13thStreet(List<Scorers.Scorer> scorers) {
 		int count = 0;
-		double sum = 0.0;
-		double flSum = 0.0;
+		int[] sums = new int[scorers.size()];
+		
 		for (OfcCard p1Card : CardSetUtils.asCards(deck.getMask())) {
 			Set<OfcHand> p1Hands = player1.generateHands(p1Card);
 			if (p1Hands.size() != 1) {
@@ -294,28 +287,28 @@ public class GameState {
 				// TODO: just a wonky way to get a single hand, maybe mess with generateHands 
 				OfcHand p2Hand = p2Hands.iterator().next();
 				count++;
-				Score score = p1Hand.scoreAgainst(p2Hand);
-				sum += score.getBoring();
-				flSum += score.getFantasyland();
+
+				int index = 0;
+				for (Scorers.Scorer scorer : scorers) {
+					sums[index] += scorer.score(p1Hand, p2Hand);
+					index++;
+				}
 			}
 		}
-		double value = sum / count;
-		cache.put(this, value);
+		
+		int index = 0;
+		Map<String, Double> scores = Maps.newHashMap();
+		for (Scorers.Scorer scorer : scorers) {
+			scores.put(scorer.getCacheFile(), (double) sums[index] / count);
+			index++;
+		}
 
-		double flvalue = flSum / count;
-		flcache.put(this, flvalue);
-		return new Score(value, flvalue);
+		return scores;
 	}
 
-	public double getValueSequential() {
-		double sum = 0.0;
-		int count = 0;
-		
-		// Use threadpool for 12.5 street
+	public Map<String, Double> getValueSequential(List<Scorers.Scorer> scorers) {
 
-		TODO TODO TODO NOW DAMMIT: oh dear, this may not work with FL
-
-		Map<GameState, Double> bestStates = generateBestStateValues(getStreet() > 12);
+		Table<String, GameState, Double> bestStates = generateBestStateValues(scorers);
 		
 		for (GameState state : bestStates.keySet()) {
 			count++;

@@ -40,13 +40,14 @@ public class Scorers {
 		 * Return the value of p1's hand scored against p2
 		 */
 		int score(OfcHand first, OfcHand second);
+		
+		String getCacheFile();
 	}
 
 	private static abstract class AbstractScorer implements Scorer {
-		protected abstract String getCacheFile();
 		protected abstract Map<Long, Integer> getBackRoyaltyMap();
 		protected abstract int getFantasylandValue(OfcHand hand);
-		
+	/*	
 		protected final File cacheFile = initCacheFile();
 		protected final Cache<GameState, Double> cache = initCache();
 
@@ -68,8 +69,7 @@ public class Scorers {
 					.recordStats()
 					.build(new CacheLoader<GameState, Double>() {
 						public Double load(GameState state) {
-							return 0.0;
-//							return state.calculateValue();
+							return state.calculateValue(this);
 						}});
 			
 			long timestamp = System.currentTimeMillis();
@@ -96,7 +96,7 @@ public class Scorers {
 			System.out.println("load from " + getCacheFile() + " took " + (System.currentTimeMillis() - timestamp));
 			return cache;
 		}
-		
+	*/
 		protected final int getRoyaltyValue(OfcHand hand) {
 			if (!hand.isComplete()) {
 				throw new IllegalArgumentException("Hand not complete");
@@ -250,7 +250,6 @@ public class Scorers {
 	
 	private static final List<Scorer> SCORERS = ImmutableList.<Scorer>of(new StandardScorer(), new StandardFantasylandScorer(),
 			new NewScorer(), new NewFantasylandScorer());
-	
 	
 	public static List<Scorer> getScorers() {
 		return SCORERS;
