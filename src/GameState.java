@@ -164,7 +164,7 @@ public class GameState {
 	
 	
 	/**
-	 * Generate the value of each best state reachable from this one, i.e., optimal setting for each card.
+	 * Generate the value of each best state reachable from this one, i.e., optimal setting for each card. // lies
 	 * If a state is the best setting for any scorer, it will be returned.
 	 */
 	private Table<String, GameState, Double> generateBestStateValues(List<Scorers.Scorer> scorers) {
@@ -172,43 +172,53 @@ public class GameState {
 			throw new IllegalStateException("Shouldn't generate new states for complete hand");
 		}
 
-		Table<String, GameState, Double> table = HashBasedTable.create();
-		
-		table needs card as an index too
+		Table<String, GameState, Double> bestScores = HashBasedTable.create();
 		
 		for (OfcCard card : CardSetUtils.asCards(deck.getMask())) {
-			// TODO: Double.MIN_VALUE doesn't compare properly.
-			GameState bestSet = null;
-			double bestValue = -1000000000000.0;
+
+			Table<String, GameState, Double> allScoresForHand = HashBasedTable.create();
 			
-			Set<OfcHand> hands = player1.generateHands(card);
-			for (OfcHand hand : hands) {
+			for (OfcHand hand : player1.generateHands(card)) {
 				GameState candidateState = new GameState(player2, hand, new OfcDeck(deck.withoutCard(card)));
-				Map<String, Double> scores = candidateState.getValue(scorers);
+				Map<String, Double> scoresForHand = candidateState.getValue(scorers);
 				for (Scorers.Scorer scorer : scorers) {
 					// Score is from opponent's perspective, so we flip it
-					table.put(scorer.getCacheFile(), candidateState, scores.get(scorer.getCacheFile()) * -1);
+					allScoresForHand.put(scorer.getKey(), candidateState, scoresForHand.get(scorer.getKey()) * -1);
 				}
-				
 				// it would be nice to filter out hopeless settings here
-				
 			}
+
+			// Now we have the score for each setting of this card, filter out the unusable ones
+			for (Scorers.Scorer scorer : scorers) {
+				// TODO: Double.MIN_VALUE doesn't compare properly.
+				GameState bestSet = null;
+				double bestValue = -1000000000000.0;
+				Map<GameState, Double> scoresForScorer = allScoresForHand.row(scorer.getKey());
+				for (Map.Entry<GameState, Double> entry : scoresForScorer.entrySet()) {
+					if (entry.getValue() > bestValue) {
+						bestSet = entry.getKey();
+						bestValue = entry.getValue();
+					}
+				}
+				bestScores.put(scorer.getKey(), bestSet, bestValue);
+			}
+			
 		}
 
-		statesSolved.addAndGet(table.columnKeySet().size());
-		counter.addAndGet(table.columnKeySet().size());
-		statesSolvedByStreet.add(table.columnKeySet().iterator().next().getStreet(), table.columnKeySet().size());
+		statesSolved.addAndGet(bestScores.columnKeySet().size());
+		counter.addAndGet(bestScores.columnKeySet().size());
+		statesSolvedByStreet.add(bestScores.columnKeySet().iterator().next().getStreet(), bestScores.columnKeySet().size());
 		if (counter.longValue() > 10000) {
 			counter.set(0L);
 			System.out.println(getInstrumentation());
 		}
 
 		// sanity check
-		if (table.columnKeySet().size() > (52 * 3 * scorers.size())) {
+		if (bestScores.columnKeySet().size() > (52 * 3 * scorers.size())) {
 			throw new IllegalStateException("shouldn't happen");
 		}
-		
-		return table;
+
+		return bestScores;
 	}
 	
 	public boolean isComplete() {
@@ -310,13 +320,19 @@ public class GameState {
 
 		Table<String, GameState, Double> bestStates = generateBestStateValues(scorers);
 		
-		for (GameState state : bestStates.keySet()) {
-			count++;
-			sum += bestStates.get(state);
+		Map<String, Double> values = Maps.newHashMap();
+
+		for (String key : bestStates.rowKeySet()) {
+			int count = 0;
+			double sum = 0.0;
+			for (GameState state : bestStates.row(key).keySet()) {
+				count++;
+				sum += bestStates.get(key, state);
+			}
+			values.put(key, sum / count);
 		}
 		
-		// Current player's value is the negative of the opponent's value.
-		return sum / count;
+		return values;
 	}
 
 	/*
@@ -431,7 +447,7 @@ public class GameState {
 		sb.append(player2);
 		sb.append("\n");
 		if (isComplete()) {
-			sb.append(getValue() + " points\n");
+			sb.append(getValue(Scorers.getScorers()) + " points\n");
 		}
 		sb.append(deck);
 		return sb.toString();

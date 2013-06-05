@@ -8,37 +8,34 @@ public class OfcSolver {
 		deck.initialize();
 		
 		OfcHand player1 = new LongOfcHand();
-		player1.addFront(deck.removeCard("2d"));
-		player1.addFront(deck.removeCard("Td"));
-		player1.addFront(deck.removeCard("2c"));
-		
-		player1.addMiddle(deck.removeCard("7s"));
-//		player1.addMiddle(deck.removeCard("7c"));
-		player1.addMiddle(deck.removeCard("Qd"));
-		//player1.addMiddle(deck.removeCard("7h"));
-		player1.addMiddle(deck.removeCard("Kc"));
-
-		player1.addBack(deck.removeCard("Ah"));
-		player1.addBack(deck.removeCard("Jh"));
-//		player1.addBack(deck.removeCard("Jd"));
-		player1.addBack(deck.removeCard("Ad"));
-		
 		OfcHand player2 = new LongOfcHand();
-		player2.addFront(deck.removeCard("6h"));
-		player2.addFront(deck.removeCard("2h"));
-//		player2.addFront(deck.removeCard("8c"));
+
+		player2.addFront(deck.removeCard("Qd"));
+		player2.addFront(deck.removeCard("7s"));
 		
-//		player2.addMiddle(deck.removeCard("8d"));
-//		player2.addMiddle(deck.removeCard("8s"));
-		player2.addMiddle(deck.removeCard("8h"));
-		player2.addMiddle(deck.removeCard("Js"));
-		player2.addMiddle(deck.removeCard("9s"));
+		player2.addMiddle(deck.removeCard("2d"));
+		player2.addMiddle(deck.removeCard("4h"));
+		player2.addMiddle(deck.removeCard("3s"));
+		player2.addMiddle(deck.removeCard("5h"));
+
+		player2.addBack(deck.removeCard("8c"));
+		player2.addBack(deck.removeCard("8s"));
+		player2.addBack(deck.removeCard("9c"));
+		player2.addBack(deck.removeCard("8d"));
+		player2.addBack(deck.removeCard("7d"));
+
+		player1.addFront(deck.removeCard("Qs"));
+		player1.addFront(deck.removeCard("Kd"));
 		
-		player2.addBack(deck.removeCard("Tc"));
-		player2.addBack(deck.removeCard("Ts"));
-		player2.addBack(deck.removeCard("Kd"));
-		player2.addBack(deck.removeCard("Ks"));
-//		player2.addBack(deck.removeCard("2s"));
+		player1.addMiddle(deck.removeCard("Ac"));
+		player1.addMiddle(deck.removeCard("2h"));
+		player1.addMiddle(deck.removeCard("As"));
+		player1.addMiddle(deck.removeCard("3d"));
+		
+		player1.addBack(deck.removeCard("5s"));
+		player1.addBack(deck.removeCard("5d"));
+		player1.addBack(deck.removeCard("Th"));
+		player1.addBack(deck.removeCard("Td"));
 
 		
 		/*	
@@ -61,7 +58,7 @@ public class OfcSolver {
 		System.out.println(gs);
 
 		long timestamp = System.currentTimeMillis();	
-		System.out.println(gs.getValue());
+		System.out.println(gs.getValue(Scorers.getScorers()));
 		System.out.println((System.currentTimeMillis() - timestamp) / 1000 + " seconds");
 	}
 	

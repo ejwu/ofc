@@ -42,12 +42,17 @@ public class Scorers {
 		int score(OfcHand first, OfcHand second);
 		
 		String getCacheFile();
+		String getKey();
 	}
 
 	private static abstract class AbstractScorer implements Scorer {
 		protected abstract Map<Long, Integer> getBackRoyaltyMap();
 		protected abstract int getFantasylandValue(OfcHand hand);
-	/*	
+
+		public String getKey() {
+			return getCacheFile();
+		}
+		/*	
 		protected final File cacheFile = initCacheFile();
 		protected final Cache<GameState, Double> cache = initCache();
 
