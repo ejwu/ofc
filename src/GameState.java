@@ -104,13 +104,12 @@ public class GameState {
 			if (!file.exists()) {
 				try {
 					file.createNewFile();
-					tempCacheMap.put(scorer.getKey(), file);
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
 			}
+			tempCacheMap.put(scorer.getKey(), file);
 		}
-		
 		return ImmutableMap.copyOf(tempCacheMap);
 	}
 	
@@ -155,8 +154,7 @@ public class GameState {
 		for (Double street : streets) {
 			sb.append(street + ": " + statesSolvedByStreet.count(street) + "\n");
 		}
-//		sb.append(cache.stats() + "\n");
-//		sb.append(flcache.stats() + "\n");
+		sb.append(CACHE.stats() + "\n");
 		return sb.toString();
 	}
 	
@@ -233,7 +231,6 @@ public class GameState {
 		if (getStreet() > 13.0) {
 			throw new IllegalStateException("never happen");
 		}
-
 		Map<String, Double> values = CACHE.getUnchecked(this);
 		
 		for (Scorers.Scorer scorer : scorers) {
