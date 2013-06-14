@@ -240,6 +240,34 @@ public class LongOfcHand extends CachedValueOfcHand {
 		return Deck.cardMaskString(mask) + "\n";
 	}
 	
+	public void setHand(String handString, OfcDeck deck) {
+		String[] hands = handString.split("/");
+		if (hands.length != 3) {
+			throw new IllegalArgumentException("Must have 3 hands");
+		}
+		int index = 0;
+		while (index < hands[0].length()) {
+			String cardString = hands[0].substring(index, index + 2);
+			addFront(new OfcCard(cardString));
+			deck.removeCard(cardString);
+			index += 2;
+		}
+		index = 0;
+		while (index < hands[1].length()) {
+			String cardString = hands[1].substring(index, index + 2);
+			addMiddle(new OfcCard(cardString));
+			deck.removeCard(cardString);
+			index += 2;
+		}
+		index = 0;
+		while (index < hands[2].length()) {
+			String cardString = hands[2].substring(index, index + 2);
+			addBack(new OfcCard(cardString));
+			deck.removeCard(cardString);
+			index += 2;
+		}
+	}
+	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

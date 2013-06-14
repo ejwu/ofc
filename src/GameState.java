@@ -18,6 +18,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ConcurrentHashMultiset;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Table;
@@ -27,83 +28,57 @@ public class GameState {
 	/*
 	private static final ExecutorService executor = Executors.newCachedThreadPool();
 	
-	private static final File CACHE_FILE;
-	private static final File FL_CACHE_FILE;
+*/
 	
-	private static final LoadingCache<GameState, Double> cache =
-		CacheBuilder.newBuilder().concurrencyLevel(1)
-			.maximumSize(2000000L)
-			.recordStats()
-			.build(new CacheLoader<GameState, Double>() {
-				public Double load(GameState state) {
-					return state.calculateValue();
-				}
-			});
-			
-	private static final LoadingCache<GameState, Double> flcache =
+	// bit mask for the full deck, used for checking that a state is valid
+	private static final long FULL_DECK_MASK;
+
+	private static Map<String, File> CACHE_FILES;
+	
+	private static final LoadingCache<GameState, Map<String, Double>> CACHE =
 			CacheBuilder.newBuilder().concurrencyLevel(1)
 				.maximumSize(2000000L)
 				.recordStats()
-				.build(new CacheLoader<GameState, Double>() {
-					public Double load(GameState state) {
-						return state.calculateValue();
+				.build(new CacheLoader<GameState, Map<String, Double>>() {
+					public Map<String, Double> load(GameState state) {
+						return state.calculateValue(Scorers.getScorers());
 					}
 				});
-*/
-	// bit mask for the full deck, used for checking that a state is valid
-	private static final long FULL_DECK_MASK;
 	
 	static {
-		long fullDeck = 0L;
-		for (int i = 0; i < 52; i++) {
-			fullDeck <<= 1;
-			fullDeck |= 1L;
-		}
-		FULL_DECK_MASK = fullDeck;
-	/*	
-		CACHE_FILE = new File("cache.txt");
-		if (!CACHE_FILE.exists()) {
-			try {
-				CACHE_FILE.createNewFile();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		FL_CACHE_FILE = new File("fl_cache.txt");
-		if (!FL_CACHE_FILE.exists()) {
-			try {
-				FL_CACHE_FILE.createNewFile();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		
+		FULL_DECK_MASK = createFullDeckMask();
+		CACHE_FILES = createCacheFiles();
+
 		long timestamp = System.currentTimeMillis();
+
 		BufferedReader reader = null;
 		try {
-			reader = new BufferedReader(new FileReader("cache.txt"));
-			String s = reader.readLine();
-			while (s != null) {
-				if (!s.trim().isEmpty()) {
-					cache.put(fromFileString(s), getValueFromFileString(s));
+			for (String cacheFileName : CACHE_FILES.keySet()) {
+				reader = new BufferedReader(new FileReader(cacheFileName));
+				String s = reader.readLine();
+				while (s != null) {
+					if (!s.trim().isEmpty()) {
+						GameState state = fromFileString(s);
+						Map<String, Double> cachedScores = CACHE.getIfPresent(state);
+						if (cachedScores == null) {
+							cachedScores = Maps.newHashMap();
+							cachedScores.put(cacheFileName, getValueFromFileString(s));
+							CACHE.put(state, cachedScores);
+						} else {
+							if (!cachedScores.containsKey(cacheFileName)) {
+								cachedScores.put(cacheFileName, getValueFromFileString(s));
+								CACHE.put(state, cachedScores);
+							}
+						}
+					}
+					s = reader.readLine();
 				}
-				s = reader.readLine();
+				reader.close();
 			}
-			reader.close();
-			
-			reader = new BufferedReader(new FileReader("fl_cache.txt"));
-			s = reader.readLine();
-			while (s != null) {
-				if (!s.trim().isEmpty()) {
-					flcache.put(fromFileString(s), getValueFromFileString(s));
-				}
-				s = reader.readLine();
-			}
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-//			System.out.println(cache.stats());
+			System.out.println(CACHE.stats());
 			try {
 				reader.close();
 			} catch (Exception e) {
@@ -111,7 +86,32 @@ public class GameState {
 			}
 		}
 		System.out.println("load from file took " + (System.currentTimeMillis() - timestamp));
-*/
+	}
+	
+	private static final long createFullDeckMask() {
+		long fullDeck = 0L;
+		for (int i = 0; i < 52; i++) {
+			fullDeck <<= 1;
+			fullDeck |= 1L;
+		}
+		return fullDeck;
+	}
+	
+	private static final Map<String, File> createCacheFiles() {
+		Map<String, File> tempCacheMap = Maps.newHashMap();
+		for (Scorers.Scorer scorer : Scorers.getScorers()) {
+			File file = new File(scorer.getCacheFile());
+			if (!file.exists()) {
+				try {
+					file.createNewFile();
+					tempCacheMap.put(scorer.getKey(), file);
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+		
+		return ImmutableMap.copyOf(tempCacheMap);
 	}
 	
 	// instrumentation
@@ -233,14 +233,17 @@ public class GameState {
 		if (getStreet() > 13.0) {
 			throw new IllegalStateException("never happen");
 		}
-/*
-		Double value = cache.getUnchecked(this);
-		Double flvalue = flcache.getUnchecked(this);
-		if (value != null && flvalue != null) {
-			return new Score(value, flvalue);
+
+		Map<String, Double> values = CACHE.getUnchecked(this);
+		
+		for (Scorers.Scorer scorer : scorers) {
+			if (!values.containsKey(scorer.getKey())) {
+				// if we're missing any value, recalculate them all
+				return calculateValue(scorers);
+			}
 		}
-*/
-		return calculateValue(scorers);
+		
+		return values;
 	}
 	
 	/**
@@ -259,22 +262,22 @@ public class GameState {
 			System.out.println(this);
 			System.out.println(values);
 			System.out.println(getInstrumentation());
-			/*
+
 			try {
-				FileWriter fw = new FileWriter(CACHE_FILE.getAbsoluteFile(), true);
-				BufferedWriter bw = new BufferedWriter(fw);
-				bw.write(toFileString() + " " + value + "\n");
-				bw.flush();
-				bw.close();
+				for (Scorers.Scorer scorer : scorers) {
+					FileWriter fw = new FileWriter(CACHE_FILES.get(scorer.getCacheFile()).getAbsoluteFile(), true);
+					BufferedWriter bw = new BufferedWriter(fw);
+					bw.write(toFileString() + " " + values.get(scorer.getKey()) + "\n");
+					bw.flush();
+					bw.close();
+				}
 			} catch (IOException e) {
-				e.printStackTrace();
-				// can't do much, oh well
+				throw new RuntimeException(e);
 			}
-			*/
 		}
 
 		// TODO: be smarter about cache policy
-//		cache.put(this, value);
+		CACHE.put(this, values);
 		return values;
 	}
 

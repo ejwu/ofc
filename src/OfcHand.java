@@ -36,7 +36,12 @@ public interface OfcHand {
 	void addBack(OfcCard card);
 	void addMiddle(OfcCard card);
 	void addFront(OfcCard card);
-
+	/**
+	 * QsQdQh/KsKdKhKc/AsAcAdAh2h
+	 * @param hand
+	 */
+	void setHand(String hand, OfcDeck deck);
+	
 	int getBackSize();
 	int getMiddleSize();
 	int getFrontSize();

@@ -49,6 +49,7 @@ public class Scorers {
 		protected abstract Map<Long, Integer> getBackRoyaltyMap();
 		protected abstract int getFantasylandValue(OfcHand hand);
 
+		// NOTE: actually never mind, these must be the same.  Don't mess with this
 		public String getKey() {
 			return getCacheFile();
 		}
@@ -256,7 +257,9 @@ public class Scorers {
 	private static final List<Scorer> SCORERS = ImmutableList.<Scorer>of(new StandardScorer(), new StandardFantasylandScorer(),
 			new NewScorer(), new NewFantasylandScorer());
 	
+	private static final List<Scorer> STANDARD_SCORERS = ImmutableList.<Scorer>of(new StandardScorer(), new StandardFantasylandScorer());
+	
 	public static List<Scorer> getScorers() {
-		return SCORERS;
+		return STANDARD_SCORERS;
 	}
 }
