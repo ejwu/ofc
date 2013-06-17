@@ -45,7 +45,19 @@ public class GameState {
 					}
 				});
 	
+	// instrumentation
+	private static final AtomicLong statesSolved;
+	private static final AtomicLong counter;
+	private static final Multiset<Double> statesSolvedByStreet;
+	private static final long startTime = System.currentTimeMillis();
+	private static long timestamp = 0L;
+	
 	static {
+		statesSolved = new AtomicLong(0L);
+		counter = new AtomicLong(0L);
+		statesSolvedByStreet = ConcurrentHashMultiset.create();
+		
+		
 		FULL_DECK_MASK = createFullDeckMask();
 		CACHE_FILES = createCacheFiles();
 
@@ -70,6 +82,7 @@ public class GameState {
 								CACHE.put(state, cachedScores);
 							}
 						}
+						updateInstrumentation(state.getStreet(), 1);
 					}
 					s = reader.readLine();
 				}
@@ -113,13 +126,6 @@ public class GameState {
 		return ImmutableMap.copyOf(tempCacheMap);
 	}
 	
-	// instrumentation
-	private static final AtomicLong statesSolved = new AtomicLong(0L);
-	private static final AtomicLong counter = new AtomicLong(0L);
-	private static final long startTime = System.currentTimeMillis();
-	private static long timestamp = 0L;
-	private static final Multiset<Double> statesSolvedByStreet = ConcurrentHashMultiset.create();
-		
 	// The current player
 	OfcHand player1;
 	OfcHand player2;
@@ -158,8 +164,11 @@ public class GameState {
 		return sb.toString();
 	}
 	
-	
-	
+	private static void updateInstrumentation(double street, int numStates) {
+		statesSolved.addAndGet(numStates);
+		counter.addAndGet(numStates);
+		statesSolvedByStreet.add(street, numStates);
+	}
 	
 	/**
 	 * Generate the value of each best state reachable from this one, i.e., optimal setting for each card. // lies
@@ -203,9 +212,8 @@ public class GameState {
 			
 		}
 
-		statesSolved.addAndGet(bestScores.columnKeySet().size());
-		counter.addAndGet(bestScores.columnKeySet().size());
-		statesSolvedByStreet.add(bestScores.columnKeySet().iterator().next().getStreet(), bestScores.columnKeySet().size());
+		updateInstrumentation(bestScores.columnKeySet().iterator().next().getStreet(), bestScores.columnKeySet().size());
+		
 		if (counter.longValue() > 10000) {
 			counter.set(0L);
 			System.out.println(getInstrumentation());
