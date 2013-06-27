@@ -196,6 +196,7 @@ public class GameState {
 			}
 
 			// Now we have the score for each setting of this card, filter out the unusable ones
+			boolean instrumented = false;
 			for (Scorers.Scorer scorer : scorers) {
 				// TODO: Double.MIN_VALUE doesn't compare properly.
 				GameState bestSet = null;
@@ -208,11 +209,15 @@ public class GameState {
 					}
 				}
 				bestScores.put(scorer.getKey(), bestSet, bestValue);
+				if (!instrumented) {
+					instrumented = true;
+					updateInstrumentation(bestSet.getStreet(), 1);
+				}
 			}
 			
 		}
 
-		updateInstrumentation(bestScores.columnKeySet().iterator().next().getStreet(), bestScores.columnKeySet().size());
+//		updateInstrumentation(bestScores.columnKeySet().iterator().next().getStreet(), bestScores.columnKeySet().size());
 		
 		if (counter.longValue() > 10000) {
 			counter.set(0L);
