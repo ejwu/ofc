@@ -240,6 +240,15 @@ public class LongOfcHand extends CachedValueOfcHand {
 		return Deck.cardMaskString(mask) + "\n";
 	}
 	
+	// convenient factory for tests
+	static OfcHand create(String handString) {
+		LongOfcHand hand = new LongOfcHand();
+		OfcDeck deck = new OfcDeck();
+		deck.initialize();
+		hand.setHand(handString, deck);
+		return hand;
+	}
+	
 	public void setHand(String handString, OfcDeck deck) {
 		String[] hands = handString.split("/");
 		if (hands.length != 3) {
