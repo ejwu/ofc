@@ -199,11 +199,17 @@ public class LongOfcHand extends CachedValueOfcHand {
 		sb.append("-");
 		sb.append(Strings.padStart(Long.toHexString(back), 16, '0'));
 */
-		sb.append(Deck.cardMaskString(front, ""));
-		sb.append("-");
-		sb.append(Deck.cardMaskString(middle, ""));
-		sb.append("-");
-		sb.append(Deck.cardMaskString(back, ""));
+		if (willBeFouled()) {
+			long combined = front |= middle |= back;
+			sb.append(Deck.cardMaskString(combined, ""));
+		} else {
+			sb.append(Deck.cardMaskString(front, ""));
+			sb.append("-");
+			sb.append(Deck.cardMaskString(middle, ""));
+			sb.append("-");
+			sb.append(Deck.cardMaskString(back, ""));
+		}
+
 		
 		
 		return sb.toString();
@@ -288,6 +294,11 @@ public class LongOfcHand extends CachedValueOfcHand {
 	
 	@Override
 	public int hashCode() {
+	/*
+		if (true) {
+			return toKeyString().hashCode();
+		}
+		*/
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + (int) (back ^ (back >>> 32));
@@ -305,6 +316,12 @@ public class LongOfcHand extends CachedValueOfcHand {
 		if (getClass() != obj.getClass())
 			return false;
 		LongOfcHand other = (LongOfcHand) obj;
+/*
+		if (true) {
+			return other.toKeyString().equals(toKeyString());
+		}
+*/
+		
 		if (back != other.back)
 			return false;
 		if (front != other.front)

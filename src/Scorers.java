@@ -65,9 +65,26 @@ public class Scorers {
 			// royalty values
 			long rank = hand.getBackRank() / StupidEval.ONE_PAIR
 					* StupidEval.ONE_PAIR;
+			
+			if (rank == StupidEval.STRAIGHT) {
+				return 2;
+			} else if (rank == StupidEval.FLUSH) {
+				return 4;
+			} else if (rank == StupidEval.FULL_HOUSE){
+				return 6;
+			} else if (rank == StupidEval.QUADS) {
+				return 10;
+			} else if (rank == StupidEval.STRAIGHT_FLUSH) {
+				return 15;
+			} else if (rank == StupidEval.ROYAL_FLUSH) {
+				return 25;
+			}
+			
+			/*
 			if (backRoyaltyMap.containsKey(rank)) {
 				return backRoyaltyMap.get(rank);
 			}
+			*/
 			return 0;
 		}
 		
@@ -79,9 +96,26 @@ public class Scorers {
 			// royalty values
 			long rank = hand.getMiddleRank() / StupidEval.ONE_PAIR
 					* StupidEval.ONE_PAIR;
-			if (backRoyaltyMap.containsKey(rank)) {
+			if (rank == StupidEval.STRAIGHT) {
+				return 4;
+			} else if (rank == StupidEval.FLUSH) {
+				return 8;
+			} else if (rank == StupidEval.FULL_HOUSE){
+				return 16;
+			} else if (rank == StupidEval.QUADS) {
+				return 20;
+			} else if (rank == StupidEval.STRAIGHT_FLUSH) {
+				return 30;
+			} else if (rank == StupidEval.ROYAL_FLUSH) {
+				return 50;
+			}
+
+			/*
+			 * if (backRoyaltyMap.containsKey(rank)) {
+			 
 				return backRoyaltyMap.get(rank) * 2;
 			}
+			*/
 			return 0;
 		}
 
@@ -125,6 +159,8 @@ public class Scorers {
 
 		public final int score(OfcHand first, OfcHand second) {
 			if (!first.isComplete() || !second.isComplete()) {
+				System.out.println(first);
+				System.out.println(second);
 				throw new IllegalArgumentException(
 						"Can only compare complete hands");
 			}
@@ -245,7 +281,10 @@ public class Scorers {
 	private static final List<Scorer> NEW_SCORERS = ImmutableList
 			.<Scorer>of(new NewScorer(), new NewFantasylandScorer());
 	
+	private static final List<Scorer> NEW_FL_SCORER = ImmutableList
+			.<Scorer>of(new NewFantasylandScorer());
+	
 	public static List<Scorer> getScorers() {
-		return NEW_SCORERS;
+		return NEW_FL_SCORER;
 	}
 }

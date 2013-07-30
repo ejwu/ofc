@@ -25,7 +25,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Table;
-import com.sun.xml.internal.bind.v2.TODO;
 
 public class GameState {
 	private static final ExecutorService executor = Executors.newFixedThreadPool(8);
