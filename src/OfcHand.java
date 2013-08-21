@@ -33,6 +33,13 @@ public interface OfcHand {
 
 	Set<OfcHand> generateHands(OfcCard card);
 
+	/**
+	 * For a hand on the last street, slot the given card in the only available
+	 * location.
+	 * @throw IllegalStateException if there is more than one place for the card to go.
+	 */
+	OfcHand generateOnlyHand(OfcCard card);
+
 	void addBack(OfcCard card);
 	void addMiddle(OfcCard card);
 	void addFront(OfcCard card);
