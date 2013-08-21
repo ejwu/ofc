@@ -131,6 +131,22 @@ public abstract class OfcHandTestCase extends TestCase {
 		assertTrue(hand1.isFouled());
 	}
 	
+	public void testToKeyStringDoesNotMutate() {
+		addFront1("Ac");
+		addFront1("Ad");
+		addFront1("As");
+		addMiddle1("Kd");
+		addMiddle1("2c");
+		addMiddle1("3c");
+		addMiddle1("4c");
+		addMiddle1("5c");
+		
+		OfcHand copy = hand1.copy();
+		assertEquals(copy, hand1);
+		hand1.toKeyString();
+		assertEquals(copy, hand1);
+	}
+	
 	// TODO: many more tests, especially for scoring
 	public void testFouled() {
 		

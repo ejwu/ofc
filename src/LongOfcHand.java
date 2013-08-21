@@ -200,7 +200,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 		sb.append(Strings.padStart(Long.toHexString(back), 16, '0'));
 */
 		if (willBeFouled()) {
-			long combined = front |= middle |= back;
+			long combined = front | middle | back;
 			sb.append(Deck.cardMaskString(combined, ""));
 		} else {
 			sb.append(Deck.cardMaskString(front, ""));
