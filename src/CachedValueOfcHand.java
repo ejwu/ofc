@@ -164,6 +164,31 @@ public abstract class CachedValueOfcHand implements OfcHand {
 	
 	/*
 	 * TODO: again, AbstractOfcHand
+	 * @see OfcHand#generateOnlyHand(OfcCard)
+	 */
+	@Override
+	public OfcHand generateOnlyHand(OfcCard card) {
+		OfcHand copy = this.copy();
+		int count = 0;
+		if (getBackSize() < BACK_SIZE) {
+			copy.addBack(card);
+			count++;
+		} 
+		if (getMiddleSize() < MIDDLE_SIZE) {
+			copy.addMiddle(card);
+			count++;
+		} else if (getFrontSize() < FRONT_SIZE) {
+			copy.addFront(card);
+			count++;
+		} 
+		if (count != 1) {
+			throw new IllegalStateException("Hand is full.");
+		}
+		return copy;
+	}
+	
+	/*
+	 * TODO: again, AbstractOfcHand
 	 * @see OfcHand#generateHands(OfcCard)
 	 */
 	@Override

@@ -308,12 +308,7 @@ public class GameState {
 			// TODO: just a wonky way to get a single hand, maybe mess with generateHands 
 			OfcHand p1Hand = p1Hands.iterator().next();
 			for (OfcCard p2Card : CardSetUtils.asCards(deck.withoutCard(p1Card))) {
-				Set<OfcHand> p2Hands = player2.generateHands(p2Card);
-				if (p2Hands.size() != 1) {
-					throw new IllegalStateException("should only generate one hand");
-				}
-				// TODO: just a wonky way to get a single hand, maybe mess with generateHands 
-				OfcHand p2Hand = p2Hands.iterator().next();
+				OfcHand p2Hand = player2.generateOnlyHand(p2Card);
 				count++;
 
 				int index = 0;
