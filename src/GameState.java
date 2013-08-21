@@ -466,6 +466,10 @@ public class GameState {
 		return true;
 	}
 
+	public static void shutdown() {
+		executor.shutdown();
+	}
+	
 	@Override
 	public String toString() {		
 		StringBuilder sb = new StringBuilder();
