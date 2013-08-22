@@ -60,4 +60,13 @@ public class LongOfcHandTest extends CachedValueOfcHandTestCase {
 		LongOfcHand from = LongOfcHand.fromKeyString(keyString);
 		assertEquals(cHand1, from);
 	}
+	
+	public void testKeyStringFouledHand() {
+		foulHand1();
+		String keyString = hand1.toKeyString();
+		LongOfcHand from = LongOfcHand.fromKeyString(keyString);
+
+		// We can't recreate the actual hand, all we know is that it will be fouled
+		assertTrue(from.willBeFouled());
+	}
 }

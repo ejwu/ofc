@@ -201,6 +201,8 @@ public class LongOfcHand extends CachedValueOfcHand {
 */
 		if (willBeFouled()) {
 			long combined = front | middle | back;
+			// such a hack
+			sb.append("F");
 			sb.append(Deck.cardMaskString(combined, ""));
 		} else {
 			sb.append(Deck.cardMaskString(front, ""));
@@ -210,12 +212,35 @@ public class LongOfcHand extends CachedValueOfcHand {
 			sb.append(Deck.cardMaskString(back, ""));
 		}
 
-		
-		
 		return sb.toString();
 	}
 
 	public static LongOfcHand fromKeyString(String s) {
+		if (s.startsWith("F")) {
+			// Fouled hand, just fill the hand and set willBeFouled to be true.  This sort of depends on
+			// the idea that setting willBeFouled to true will never be reversed.  Hopefully this doesn't
+			// break any assumptions about the cached hand values - the idea is that they never matter
+			// when willBeFouled is set.
+			//
+			// TODO: see if this makes any sense at all
+			LongOfcHand hand = new LongOfcHand();
+			hand.willBeFouled = true;
+			int index = 1; // Skip the leading "F"
+			int count = 0;
+			while (index < s.length()) {
+				if (count < OfcHand.FRONT_SIZE) {
+					hand.addFront(new OfcCard(s.substring(index, index + 2)));
+				} else if (count < OfcHand.FRONT_SIZE + OfcHand.MIDDLE_SIZE) {
+					hand.addMiddle(new OfcCard(s.substring(index, index + 2)));
+				} else {
+					hand.addBack(new OfcCard(s.substring(index, index + 2)));
+				}
+				index += 2;
+				count++;
+			}
+			return hand;
+		}
+		
 		String[] hands = s.split("-");
 		if (hands.length != 3) {
 			throw new IllegalArgumentException("format incorrect");
