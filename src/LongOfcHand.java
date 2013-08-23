@@ -281,7 +281,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 	}
 	
 	public void setHand(String handString, OfcDeck deck) {
-		String[] hands = handString.split("/");
+		String[] hands = handString.split("/", -1); // Allow empty string after the last '/'
 		if (hands.length != 3) {
 			throw new IllegalArgumentException("Must have 3 hands");
 		}

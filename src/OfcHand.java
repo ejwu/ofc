@@ -43,7 +43,9 @@ public interface OfcHand {
 	void addBack(OfcCard card);
 	void addMiddle(OfcCard card);
 	void addFront(OfcCard card);
+
 	/**
+	 * TODO: maybe deck shouldn't be a param here, do you feel lucky?
 	 * QsQdQh/KsKdKhKc/AsAcAdAh2h
 	 * @param hand
 	 */
