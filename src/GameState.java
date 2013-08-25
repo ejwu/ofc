@@ -311,10 +311,8 @@ public class GameState {
 				OfcHand p2Hand = player2.generateOnlyHand(p2Card);
 				count++;
 
-				int index = 0;
-				for (Scorers.Scorer scorer : scorers) {
-					sums[index] += scorer.score(p1Hand, p2Hand);
-					index++;
+				for (int i = 0; i < scorers.size(); i++) {
+					sums[i] += scorers.get(i).score(p1Hand, p2Hand);
 				}
 			}
 		}
