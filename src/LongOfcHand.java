@@ -11,12 +11,19 @@ public class LongOfcHand extends CachedValueOfcHand {
 	long middle;
 	@VisibleForTesting
 	long back;
+
+	private int frontSize;
+	private int middleSize;
+	private int backSize;
 	
 	public LongOfcHand() {
 		super();
 		front = 0;
 		middle = 0;
 		back = 0;
+		frontSize = 0;
+		middleSize = 0;
+		backSize = 0;
 	}
 	
 	private LongOfcHand(LongOfcHand source) {
@@ -24,6 +31,9 @@ public class LongOfcHand extends CachedValueOfcHand {
 		this.front = source.front;
 		this.middle = source.middle;
 		this.back = source.back;
+		this.frontSize = source.frontSize;
+		this.middleSize = source.middleSize;
+		this.backSize = source.backSize;
 	}
 	
 	@Override
@@ -33,17 +43,17 @@ public class LongOfcHand extends CachedValueOfcHand {
 
 	@Override
 	public int getBackSize() {
-		return Long.bitCount(back);
+		return backSize;
 	}
 	
 	@Override
 	public int getMiddleSize() {
-		return Long.bitCount(middle);
+		return middleSize;
 	}
 	
 	@Override
 	public int getFrontSize() {
-		return Long.bitCount(front);
+		return frontSize;
 	}
 
 	@Override
@@ -71,7 +81,8 @@ public class LongOfcHand extends CachedValueOfcHand {
 			throw new IllegalArgumentException("Card already in back");
 		}
 		back |= card.getMask();
-		
+		backSize++;
+
 		if (getBackSize() == BACK_SIZE) {
 			completeBack();
 		}
@@ -86,6 +97,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 			throw new IllegalArgumentException("Card already in middle");
 		}
 		middle |= card.getMask();
+		middleSize++;
 
 		if (getMiddleSize() == MIDDLE_SIZE) {
 			completeMiddle();
@@ -101,6 +113,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 			throw new IllegalArgumentException("Card already in front");
 		}
 		front |= card.getMask();
+		frontSize++;
 
 		if (getFrontSize() == FRONT_SIZE) {
 			completeFront();
@@ -134,10 +147,6 @@ public class LongOfcHand extends CachedValueOfcHand {
 	 */
 	@VisibleForTesting
 	static void convertForEval(long mask, int[] ranks, int[] suits, int numCards) {
-		if (numCards != Long.bitCount(mask)) {
-			throw new IllegalArgumentException("Hand isn't complete");
-		}
-
 		// NOTE: There's a hidden requirement here that the cards are sorted in descending order
 		CardSetUtils.convertToArrays(mask, ranks, suits);
 	}
