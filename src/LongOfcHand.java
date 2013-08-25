@@ -77,10 +77,10 @@ public class LongOfcHand extends CachedValueOfcHand {
 		if (getBackSize() >= BACK_SIZE) {
 			throw new IllegalStateException("Back already full");
 		}
-		if ((back & card.getMask()) != 0) {
+		if ((back & card.mask) != 0) {
 			throw new IllegalArgumentException("Card already in back");
 		}
-		back |= card.getMask();
+		back |= card.mask;
 		backSize++;
 
 		if (getBackSize() == BACK_SIZE) {
@@ -93,10 +93,10 @@ public class LongOfcHand extends CachedValueOfcHand {
 		if (getMiddleSize() >= MIDDLE_SIZE) {
 			throw new IllegalStateException("Middle already full");
 		}
-		if ((middle & card.getMask()) != 0) {
+		if ((middle & card.mask) != 0) {
 			throw new IllegalArgumentException("Card already in middle");
 		}
-		middle |= card.getMask();
+		middle |= card.mask;
 		middleSize++;
 
 		if (getMiddleSize() == MIDDLE_SIZE) {
@@ -109,10 +109,10 @@ public class LongOfcHand extends CachedValueOfcHand {
 		if (getFrontSize() >= FRONT_SIZE) {
 			throw new IllegalStateException("Front already full");
 		}
-		if ((front & card.getMask()) != 0) {
+		if ((front & card.mask) != 0) {
 			throw new IllegalArgumentException("Card already in front");
 		}
-		front |= card.getMask();
+		front |= card.mask;
 		frontSize++;
 
 		if (getFrontSize() == FRONT_SIZE) {
