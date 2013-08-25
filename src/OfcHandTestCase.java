@@ -6,6 +6,7 @@ public abstract class OfcHandTestCase extends TestCase {
 	protected OfcHand hand2;
 	// really only here to allow the use of setHand()
 	protected OfcDeck deck;
+	protected CompleteOfcHand ch1;
 	
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -219,17 +220,17 @@ public abstract class OfcHandTestCase extends TestCase {
 	public void testBackMustBeatMiddle() {
 		foulHand1();
 		
-		assertTrue(hand1.isFouled());
+		assertTrue(ch1.isFouled());
 	}
 	
 	public void testMiddleMustBeatFront() {
-		hand1.setHand("AdAsKd/AhAcQsJsTs/2c2d2h2s3h", deck);
-		assertTrue(hand1.isFouled());
+		ch1 = LongCompleteOfcHand.createComplete("AdAsKd/AhAcQsJsTs/2c2d2h2s3h");
+		assertTrue(ch1.isFouled());
 	}
 	
 	public void testMiddleCanOutkickFront() {
-		hand1.setHand("AdAsKd/AhAcKs3d2d/4h4c4d4s5s", deck);
-		assertTrue(!hand1.isFouled());
+		ch1 = LongCompleteOfcHand.createComplete("AdAsKd/AhAcKs3d2d/4h4c4d4s3h");
+		assertTrue(!ch1.isFouled());
 	}
 	
 	public void testToKeyStringDoesNotMutate() {
@@ -248,7 +249,7 @@ public abstract class OfcHandTestCase extends TestCase {
 
 	// TODO: poorly named, but need a lot more tests around fouling anyways
 	protected void foulHand1() {
-		hand1.setHand("2c3c4c/AdKd4d3d2d/AsKs4s3s2s", deck);
+		ch1 = LongCompleteOfcHand.createComplete("2c3c4c/AdKd4d3d2d/AsKs4s3s2s");
 	}
 	
 	// too lazy to type

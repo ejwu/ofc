@@ -12,9 +12,9 @@ public class LongOfcHand extends CachedValueOfcHand {
 	@VisibleForTesting
 	long back;
 
-	private int frontSize;
-	private int middleSize;
-	private int backSize;
+	protected int frontSize;
+	protected int middleSize;
+	protected int backSize;
 	
 	public LongOfcHand() {
 		super();
@@ -26,7 +26,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 		backSize = 0;
 	}
 	
-	private LongOfcHand(LongOfcHand source) {
+	protected LongOfcHand(LongOfcHand source) {
 		super(source);
 		this.front = source.front;
 		this.middle = source.middle;
@@ -129,16 +129,6 @@ public class LongOfcHand extends CachedValueOfcHand {
 
 	@Override
 	public boolean willBeFouled() {
-		return willBeFouled;
-	}
-
-	@Override
-	public boolean isFouled() {
-		if (!isComplete()) {
-			throw new IllegalStateException("Hand not complete");
-		}
-		// TODO: Be damn sure about this.  Making an assumption that when the hand is complete, willBeFouled is always populated
-		// via the completeXXX methods
 		return willBeFouled;
 	}
 
@@ -281,7 +271,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 	}
 	
 	// convenient factory for tests
-	static OfcHand create(String handString) {
+	static LongOfcHand create(String handString) {
 		LongOfcHand hand = new LongOfcHand();
 		OfcDeck deck = new OfcDeck();
 		deck.initialize();
@@ -315,6 +305,11 @@ public class LongOfcHand extends CachedValueOfcHand {
 			deck.removeCard(cardString);
 			index += 2;
 		}
+	}
+	
+	@Override
+	public CompleteOfcHand generateOnlyHand(OfcCard card) {
+		return new LongCompleteOfcHand(this, card);
 	}
 	
 	@Override

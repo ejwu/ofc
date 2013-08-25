@@ -301,14 +301,9 @@ public class GameState {
 		int[] sums = new int[scorers.size()];
 		
 		for (OfcCard p1Card : CardSetUtils.asCards(deck.getMask())) {
-			Set<OfcHand> p1Hands = player1.generateHands(p1Card);
-			if (p1Hands.size() != 1) {
-				throw new IllegalStateException("should only generate one hand");
-			}
-			// TODO: just a wonky way to get a single hand, maybe mess with generateHands 
-			OfcHand p1Hand = p1Hands.iterator().next();
+			CompleteOfcHand p1Hand = player1.generateOnlyHand(p1Card);
 			for (OfcCard p2Card : CardSetUtils.asCards(deck.withoutCard(p1Card))) {
-				OfcHand p2Hand = player2.generateOnlyHand(p2Card);
+				CompleteOfcHand p2Hand = player2.generateOnlyHand(p2Card);
 				count++;
 
 				for (int i = 0; i < scorers.size(); i++) {
