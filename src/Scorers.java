@@ -5,6 +5,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 public class Scorers {
+	public static final boolean DEBUG = false;
+
 	private static final Map<Long, Integer> OLD_BACK_ROYALTY_MAP = ImmutableMap
 			.<Long, Integer> builder()
 			.put(StupidEval.STRAIGHT, 2)
@@ -156,13 +158,15 @@ public class Scorers {
 		protected final boolean isFantasyland(OfcHand hand) {
 			return !hand.isFouled() && hand.getFrontRank() >= StupidEval.FANTASYLAND_THRESHOLD;
 		}
-
+		
 		public final int score(OfcHand first, OfcHand second) {
-			if (!first.isComplete() || !second.isComplete()) {
-				System.out.println(first);
-				System.out.println(second);
-				throw new IllegalArgumentException(
-						"Can only compare complete hands");
+			if (DEBUG) {
+				if (!first.isComplete() || !second.isComplete()) {
+					System.out.println(first);
+					System.out.println(second);
+					throw new IllegalArgumentException(
+							"Can only compare complete hands");
+				}
 			}
 			if (first.isFouled()) {
 				if (second.isFouled()) {
