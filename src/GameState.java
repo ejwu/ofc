@@ -463,7 +463,7 @@ public class GameState {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Game state: \n");
 		sb.append("Street: " + getStreet() + "\n");
-		sb.append("Cards in deck: " + CardSetUtils.asCards(deck.getMask()).size() + "\n");
+		sb.append("Cards in deck: " + CardSetUtils.asCards(deck.getMask()).length + "\n");
 		sb.append(player1);
 		sb.append("\n");
 		sb.append(player2);

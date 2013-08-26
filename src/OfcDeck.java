@@ -47,7 +47,7 @@ public class OfcDeck {
 		return card;
 	}
 	
-	public List<OfcCard> asList() {
+	public OfcCard[] asList() {
 		return CardSetUtils.asCards(cardMask);
 	}
 	
