@@ -9,15 +9,19 @@ public class CardSetUtils {
 	// Cache of cardMask by rank and suit
 	private static long[][] cardMasks;
 	private static long[] suitMasks;
-	
+	private static final OfcCard[][] CARDS;
+
+
 	static {
 		cardMasks = new long[13][4];
 		suitMasks = new long[4];
+		CARDS = new OfcCard[13][4];
 		for (int r = Deck.RANK_ACE; r >= 0; r--) {	
 			for (int s = Deck.SUIT_COUNT - 1; s >= 0; s--) {
 				long card = Deck.createCardMask(r, s);
 				cardMasks[r][s] = card;
 				suitMasks[s] |= card;
+				CARDS[r][s] = new OfcCard(card);
 			}
 		}
 	}
@@ -63,7 +67,7 @@ public class CardSetUtils {
 			for (int s = Deck.SUIT_COUNT - 1; s >= 0; s--) {
 				long m = cardMasks[r][s];
 				if ((mask & m) != 0) {
-					cards[i++] = new OfcCard(m);
+					cards[i++] = CARDS[r][s];
 		        }
 			}
 		}
