@@ -274,10 +274,10 @@ public class Scorers {
 	private static final List<Scorer> NEW_SCORERS = ImmutableList
 			.<Scorer>of(new NewScorer(), new NewFantasylandScorer());
 	
-	private static final List<Scorer> NEW_FL_SCORER = ImmutableList
-			.<Scorer>of(new NewFantasylandScorer());
+	private static final Scorer[] NEW_FL_SCORER = new Scorer[] {
+		new NewFantasylandScorer()};
 	
-	public static List<Scorer> getScorers() {
+	public static Scorer[] getScorers() {
 		return NEW_FL_SCORER;
 	}
 }
