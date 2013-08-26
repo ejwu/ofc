@@ -38,7 +38,7 @@ public interface OfcHand {
 	 * location.
 	 * @throw IllegalStateException if there is more than one place for the card to go.
 	 */
-	OfcHand generateOnlyHand(OfcCard card);
+	CompleteOfcHand generateOnlyHand(OfcCard card);
 
 	void addBack(OfcCard card);
 	void addMiddle(OfcCard card);
@@ -68,13 +68,6 @@ public interface OfcHand {
 
 	// use for pruning the search space
 	boolean willBeFouled();
-
-	boolean isFouled();
-
-	int getRoyaltyValue();
-	int getFantasylandValue();
-	
-	Score scoreAgainst(OfcHand other);
 
 	int getStreet();
 	

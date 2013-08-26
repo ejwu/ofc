@@ -11,19 +11,29 @@ public class LongOfcHand extends CachedValueOfcHand {
 	long middle;
 	@VisibleForTesting
 	long back;
+
+	protected int frontSize;
+	protected int middleSize;
+	protected int backSize;
 	
 	public LongOfcHand() {
 		super();
 		front = 0;
 		middle = 0;
 		back = 0;
+		frontSize = 0;
+		middleSize = 0;
+		backSize = 0;
 	}
 	
-	private LongOfcHand(LongOfcHand source) {
+	protected LongOfcHand(LongOfcHand source) {
 		super(source);
 		this.front = source.front;
 		this.middle = source.middle;
 		this.back = source.back;
+		this.frontSize = source.frontSize;
+		this.middleSize = source.middleSize;
+		this.backSize = source.backSize;
 	}
 	
 	@Override
@@ -33,17 +43,17 @@ public class LongOfcHand extends CachedValueOfcHand {
 
 	@Override
 	public int getBackSize() {
-		return Long.bitCount(back);
+		return backSize;
 	}
 	
 	@Override
 	public int getMiddleSize() {
-		return Long.bitCount(middle);
+		return middleSize;
 	}
 	
 	@Override
 	public int getFrontSize() {
-		return Long.bitCount(front);
+		return frontSize;
 	}
 
 	@Override
@@ -67,11 +77,12 @@ public class LongOfcHand extends CachedValueOfcHand {
 		if (getBackSize() >= BACK_SIZE) {
 			throw new IllegalStateException("Back already full");
 		}
-		if ((back & card.getMask()) != 0) {
+		if ((back & card.mask) != 0) {
 			throw new IllegalArgumentException("Card already in back");
 		}
-		back |= card.getMask();
-		
+		back |= card.mask;
+		backSize++;
+
 		if (getBackSize() == BACK_SIZE) {
 			completeBack();
 		}
@@ -82,10 +93,11 @@ public class LongOfcHand extends CachedValueOfcHand {
 		if (getMiddleSize() >= MIDDLE_SIZE) {
 			throw new IllegalStateException("Middle already full");
 		}
-		if ((middle & card.getMask()) != 0) {
+		if ((middle & card.mask) != 0) {
 			throw new IllegalArgumentException("Card already in middle");
 		}
-		middle |= card.getMask();
+		middle |= card.mask;
+		middleSize++;
 
 		if (getMiddleSize() == MIDDLE_SIZE) {
 			completeMiddle();
@@ -97,10 +109,11 @@ public class LongOfcHand extends CachedValueOfcHand {
 		if (getFrontSize() >= FRONT_SIZE) {
 			throw new IllegalStateException("Front already full");
 		}
-		if ((front & card.getMask()) != 0) {
+		if ((front & card.mask) != 0) {
 			throw new IllegalArgumentException("Card already in front");
 		}
-		front |= card.getMask();
+		front |= card.mask;
+		frontSize++;
 
 		if (getFrontSize() == FRONT_SIZE) {
 			completeFront();
@@ -119,25 +132,11 @@ public class LongOfcHand extends CachedValueOfcHand {
 		return willBeFouled;
 	}
 
-	@Override
-	public boolean isFouled() {
-		if (!isComplete()) {
-			throw new IllegalStateException("Hand not complete");
-		}
-		// TODO: Be damn sure about this.  Making an assumption that when the hand is complete, willBeFouled is always populated
-		// via the completeXXX methods
-		return willBeFouled;
-	}
-
 	/**
 	 * Fill the ranks and suits arrays with the value of the hand.
 	 */
 	@VisibleForTesting
 	static void convertForEval(long mask, int[] ranks, int[] suits, int numCards) {
-		if (numCards != Long.bitCount(mask)) {
-			throw new IllegalArgumentException("Hand isn't complete");
-		}
-
 		// NOTE: There's a hidden requirement here that the cards are sorted in descending order
 		CardSetUtils.convertToArrays(mask, ranks, suits);
 	}
@@ -272,7 +271,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 	}
 	
 	// convenient factory for tests
-	static OfcHand create(String handString) {
+	static LongOfcHand create(String handString) {
 		LongOfcHand hand = new LongOfcHand();
 		OfcDeck deck = new OfcDeck();
 		deck.initialize();
@@ -306,6 +305,11 @@ public class LongOfcHand extends CachedValueOfcHand {
 			deck.removeCard(cardString);
 			index += 2;
 		}
+	}
+	
+	@Override
+	public CompleteOfcHand generateOnlyHand(OfcCard card) {
+		return new LongCompleteOfcHand(this, card);
 	}
 	
 	@Override
