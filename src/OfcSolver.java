@@ -13,15 +13,15 @@ public class OfcSolver {
 //		player1.setHand("/8h4c/AsKsQs", deck);
 //		player2.setHand("Td/JdJh/QdQc", deck);
 	
-		player1.setHand("Kd3hKs/As2d/JdJc9d7c7d", deck);
-		player2.setHand("QcAd/6d7sKc/AhKhQhJhTh", deck);
+		player1.setHand("Kd3hKs/As2d8d/JdJc9d7c7d", deck);
+		player2.setHand("QcAd/6d7sKc8c/AhKhQhJhTh", deck);
 
 		GameState gs = new GameState(player1, player2, deck);
 		System.out.println(gs);
 
 		long timestamp = System.currentTimeMillis();	
 		System.out.println(gs.getValue(Scorers.getScorers(), true));
-		System.out.println((System.currentTimeMillis() - timestamp) / 1000 + " seconds");
+		System.out.println((System.currentTimeMillis() - timestamp) + " ms");
 		gs.shutdown();
 	}
 	
