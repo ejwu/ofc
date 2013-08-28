@@ -299,15 +299,21 @@ public class GameState {
 	private Map<String, Double> calculate13thStreet(Scorers.Scorer[] scorers) {
 		int count = 0;
 		int[] sums = new int[scorers.length];
-		
-		for (OfcCard p1Card : CardSetUtils.asCards(deck.getMask())) {
+		OfcCard[] cards =  CardSetUtils.asCards(deck.getMask());
+		CompleteOfcHand[] p2Hands = new CompleteOfcHand[cards.length];
+		for (int i = cards.length - 1; i >= 0; i--) {
+			p2Hands[i] = player2.generateOnlyHand(cards[i]);
+		}
+		for (int i = cards.length - 1; i >= 0; i--) {
+			OfcCard p1Card = cards[i];
 			CompleteOfcHand p1Hand = player1.generateOnlyHand(p1Card);
-			for (OfcCard p2Card : CardSetUtils.asCards(deck.withoutCard(p1Card))) {
-				CompleteOfcHand p2Hand = player2.generateOnlyHand(p2Card);
-				count++;
-
-				for (int i = 0; i < scorers.length; i++) {
-					sums[i] += scorers[i].score(p1Hand, p2Hand);
+			for (int j = cards.length - 1; j >= 0; j--) {
+				if (j != i) {
+					CompleteOfcHand p2Hand = p2Hands[j];
+					count++;
+					for (int k = 0; k < scorers.length; k++) {
+						sums[k] += scorers[k].score(p1Hand, p2Hand);
+					}
 				}
 			}
 		}
