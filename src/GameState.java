@@ -65,6 +65,7 @@ public class GameState {
 		long timestamp = System.currentTimeMillis();
 
 		BufferedReader reader = null;
+/*
 		try {
 			for (String cacheFileName : CACHE_FILES.keySet()) {
 				reader = new BufferedReader(new FileReader(cacheFileName));
@@ -100,6 +101,7 @@ public class GameState {
 			}
 		}
 		System.out.println("load from file took " + (System.currentTimeMillis() - timestamp));
+*/
 	}
 	
 	private static final long createFullDeckMask() {
