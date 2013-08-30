@@ -7,6 +7,12 @@ public abstract class OfcHandTestCase extends TestCase {
 	// really only here to allow the use of setHand()
 	protected OfcDeck deck;
 	protected CompleteOfcHand ch1;
+
+	protected static final CompleteOfcHand VALID_NO_ROYALTY_HIGH =
+		LongCompleteOfcHand.createComplete("5c5s6c/AcAsKcKsQs/8s8c8d7s6s"); // 55/AAKK/888
+	
+	protected static final CompleteOfcHand VALID_NO_ROYALTY_LOW =
+		LongCompleteOfcHand.createComplete("QhJhTh/KhQdJdTd8d/Ad6d4d3d2h"); // Q-high/K-high/A-high
 	
 	protected void setUp() throws Exception {
 		super.setUp();

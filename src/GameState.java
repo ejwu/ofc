@@ -221,7 +221,7 @@ public class GameState {
 			
 		}
 		
-		if (counter.longValue() > 10000) {
+		if (counter.longValue() > 100000) {
 			counter.set(0L);
 			System.out.println(getInstrumentation());
 		}
