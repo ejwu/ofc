@@ -38,6 +38,6 @@ public abstract class ScorerTestCase extends TestCase {
 	}
 	
 	public void testFouledHandRoyalties() throws Exception {
-		assertEquals(0, scorer.getRoyaltyValue(QUEENS_FRONT_FOULED));
+		assertEquals(0, scorer.get5CardRoyaltyValue(QUEENS_FRONT_FOULED));
 	}
 }
