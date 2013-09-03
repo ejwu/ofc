@@ -27,7 +27,7 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Table;
 
 public class GameState {
-	private static final ExecutorService executor = Executors.newFixedThreadPool(8);
+	private static final ExecutorService executor = Executors.newFixedThreadPool(1);
 	
 	// bit mask for the full deck, used for checking that a state is valid
 	private static final long FULL_DECK_MASK;
