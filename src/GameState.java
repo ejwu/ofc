@@ -52,19 +52,17 @@ public class GameState {
 	private static long timestamp = 0L;
 	
 	static {
-		System.out.println(Runtime.getRuntime().maxMemory());
-		
 		statesSolved = new AtomicLong(0L);
 		counter = new AtomicLong(0L);
 		statesSolvedByStreet = ConcurrentHashMultiset.create();
 		
 		
 		FULL_DECK_MASK = createFullDeckMask();
-		CACHE_FILES = createCacheFiles();
+//		CACHE_FILES = createCacheFiles();
 
 		long timestamp = System.currentTimeMillis();
 
-		BufferedReader reader = null;
+//		BufferedReader reader = null;
 /*
 		try {
 			for (String cacheFileName : CACHE_FILES.keySet()) {
@@ -112,7 +110,7 @@ public class GameState {
 		}
 		return fullDeck;
 	}
-	
+/*	
 	private static final Map<String, File> createCacheFiles() {
 		Map<String, File> tempCacheMap = Maps.newHashMap();
 		for (Scorers.Scorer scorer : Scorers.getScorers()) {
@@ -129,7 +127,7 @@ public class GameState {
 		}
 		return ImmutableMap.copyOf(tempCacheMap);
 	}
-	
+	*/
 	// The current player
 	OfcHand player1;
 	OfcHand player2;
@@ -279,7 +277,7 @@ public class GameState {
 			System.out.println(this);
 			System.out.println(values);
 			System.out.println(getInstrumentation());
-
+/*
 			try {
 				for (Scorers.Scorer scorer : scorers) {
 					FileWriter fw = new FileWriter(CACHE_FILES.get(scorer.getCacheFile()).getAbsoluteFile(), true);
@@ -291,10 +289,8 @@ public class GameState {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
+*/
 		}
-
-		// TODO: be smarter about cache policy
-		CACHE.put(this, values);
 		return values;
 	}
 
