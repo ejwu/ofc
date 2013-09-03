@@ -14,7 +14,7 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 		OfcHand[] startHands = new OfcHand[] {p1, p2};
 		deckSize = cards.length;
 		ranks = new long[2][deckSize][3];
-		isFouled = new boolean[2][deckSize];
+		isFouled = new boolean[2][deckSize]; // TODO:PICKUP
 		for (int p = 0; p < 2; p++) {
 			varies[p][0] = startHands[p].getFrontSize() < OfcHand.FRONT_SIZE;
 			varies[p][1] = startHands[p].getMiddleSize() < OfcHand.MIDDLE_SIZE;
@@ -49,7 +49,6 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 						} else {
 							int wins = 0;
 							for (int handNum = 0; handNum < 3; handNum++) {
-								// TODO(ejwu): fix this for ties
 								if (ranks[0][i][handNum] >
 									ranks[1][j][handNum]) {
 									wins++;
@@ -106,3 +105,4 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 		return winCount[wins];
 	}
 }
+
