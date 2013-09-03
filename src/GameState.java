@@ -284,20 +284,12 @@ public class GameState {
 	}
 
 	private double calculate13thStreet(Scorers.Scorer scorer) {
-		int count = 0;
-		int sum = 0;
 		OfcCard[] cards =  CardSetUtils.asCards(deck.getMask());
-		CompleteOfcHand[] p1Hands = new CompleteOfcHand[cards.length];
-		for (int i = cards.length - 1; i >= 0; i--) {
-			p1Hands[i] = player1.generateOnlyHand(cards[i]);
-		}
-		CompleteOfcHand[] p2Hands = new CompleteOfcHand[cards.length];
-		for (int j = cards.length - 1; j >= 0; j--) {
-			p2Hands[j] = player2.generateOnlyHand(cards[j]);
-		}
-		count += cards.length * (cards.length - 1);
-		sum += scorer.score(p1Hands, p2Hands);
-		return (double) sum / count;
+		LongOfcHandMatrix matrix = new LongOfcHandMatrix(player1, player2, cards);
+		int count = cards.length * (cards.length - 1);
+		Map<String, Double> scores = Maps.newHashMap();
+		int score = scorer.score(matrix); 
+		return (double) score / count;
 	}
 
 	public double getValueSequential(Scorers.Scorer scorer) {

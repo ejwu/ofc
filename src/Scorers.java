@@ -18,21 +18,11 @@ public class Scorers {
 		 * These must be in the same order, that is, first[i] and second[i] each
 		 * contain the same final card for each i.
 		 */
-		int score(CompleteOfcHand[] first, CompleteOfcHand[] second);
+		int score(OfcHandMatrix matrix);
 
 		String getCacheFile();
 
 		String getKey();
-		
-		// These are just to make testing easier
-		/**
-		 * Return 0 if not a FL scorer
-		 */
-		int getFantasylandValue(CompleteOfcHand hand);
-		int get5CardRoyaltyValue(CompleteOfcHand hand);
-		int getFrontValue(CompleteOfcHand hand);
-		int getMiddleValue(CompleteOfcHand hand);
-		int getBackValue(CompleteOfcHand hand);
 	}
 	
 	private static abstract class AbstractScorer implements Scorer {
@@ -42,205 +32,85 @@ public class Scorers {
 			return getCacheFile();
 		}
 
-		public final int getBackValue(CompleteOfcHand hand) {
-			// Stupid integer division hack to zero out all the insignificant
-			// digits so we can use a map to look up
-			// royalty values
-			long rank = hand.getBackRank() / StupidEval.ONE_PAIR
-					* StupidEval.ONE_PAIR;
-			
-			if (rank == StupidEval.STRAIGHT) {
-				return 2;
-			} else if (rank == StupidEval.FLUSH) {
-				return 4;
-			} else if (rank == StupidEval.FULL_HOUSE){
-				return 6;
-			} else if (rank == StupidEval.QUADS) {
-				return 10;
-			} else if (rank == StupidEval.STRAIGHT_FLUSH) {
-				return 15;
-			} else if (rank == StupidEval.ROYAL_FLUSH) {
-				return 25;
-			}
-			
-			return 0;
-		}
-		
-		public final int getMiddleValue(CompleteOfcHand hand) {
-			// Stupid integer division hack to zero out all the insignificant
-			// digits so we can use a map to look up
-			// royalty values
-			long rank = hand.getMiddleRank() / StupidEval.ONE_PAIR
-					* StupidEval.ONE_PAIR;
-			if (rank == StupidEval.STRAIGHT) {
-				return 4;
-			} else if (rank == StupidEval.FLUSH) {
-				return 8;
-			} else if (rank == StupidEval.FULL_HOUSE){
-				return 16;
-			} else if (rank == StupidEval.QUADS) {
-				return 20;
-			} else if (rank == StupidEval.STRAIGHT_FLUSH) {
-				return 30;
-			} else if (rank == StupidEval.ROYAL_FLUSH) {
-				return 50;
-			}
-
-			return 0;
-		}
-
-		public final int getFrontValue(CompleteOfcHand hand) {
-			long rank = hand.getFrontRank();
-			if (rank >= StupidEval.TRIPS) {
-				rank -= StupidEval.TRIPS;
-				// StupidEval implementation is to leave only the rank of the
-				// card here. Deuce = 0, per Deck constants
-				// Yes, this is super lame. 10 points for 222, one more for
-				// every higher rank.
-				return (int) (10 + rank);
-			} else if (rank >= StupidEval.ONE_PAIR) {
-				// More stupid implementation dependent details. Subtract out
-				// the ONE_PAIR constant, integer divide
-				// the kickers away, get left with the rank of the pair based on
-				// Deck constants. 66 = 5.
-				rank -= StupidEval.ONE_PAIR;
-				rank /= StupidEval.PAIR_CONSTANT;
-				if (rank >= 4) {
-					return (int) (rank - 3);
-				}
-			}
-			return 0;
-		}
-		
-		public final int get5CardRoyaltyValue(CompleteOfcHand hand) {
-			if (hand.isFouled()) {
-				return 0;
-			}
-
-			return getBackValue(hand) + getMiddleValue(hand) + getFrontValue(hand);
-		}
-
-		protected final boolean isFantasyland(CompleteOfcHand hand) {
-			return !hand.isFouled() && hand.getFrontRank() >= StupidEval.FANTASYLAND_THRESHOLD;
-		}
-		
-		public final int score(CompleteOfcHand[] first, CompleteOfcHand[] second) {
-			int numHands = first.length;
-			if (numHands != second.length) {
-				throw new IllegalArgumentException("Need square matrix!");
-			}
+		// Base royalty value -- use for back, or multiply by 2 for middle.
+		public final int get5CardRoyaltyValue(int player, int hand,
+											 OfcHandMatrix matrix) {
 			int total = 0;
-			for (int i = numHands - 1; i >= 0; i--) {
-				if (first[i].isFouled()) {
-					for (int j = numHands - 1; j >= 0; j--) {
-						if (i != j) {
-							if (!second[j].isFouled()) {
-								total += SCOOPED_VALUE - get5CardRoyaltyValue(second[j])
-									- getFantasylandValue(second[j]);
-							}
-						}
-					}
-				} else {
-					total += (numHands - 1) * 
-						(get5CardRoyaltyValue(first[i]) + getFantasylandValue(first[i]));
-					for (int j = numHands - 1; j >= 0; j--) {
-						if (i != j) {
-							if (second[j].isFouled()) {
-								total += SCOOPING_VALUE;
-							} else {
-								total -= get5CardRoyaltyValue(second[j]);
-								total -= getFantasylandValue(second[j]);
-
-								int wins = 0;
-								if (first[i].getBackRank() > second[j].getBackRank()) {
-									wins++;
-								}
-								if (first[i].getMiddleRank() > second[j].getMiddleRank()) {
-									wins++;
-								}
-								if (first[i].getFrontRank() > second[j].getFrontRank()) {
-									wins++;
-								}
-
-								switch (wins) {
-								case 0:
-									total += SCOOPED_VALUE;
-									break;
-								case 1:
-									total -= 1;
-									break;
-								case 2:
-									total += 1;
-									break;
-								case 3:
-									total += SCOOPING_VALUE;
-									break;
-								default:
-									throw new IllegalStateException("wtf");
-								}
-							}
-						}
-					}
-				}
+			int count = 0;
+			count = matrix.numHandsOfRank(player, hand, StupidEval.STRAIGHT);
+			if (count == 0) return total;
+			total += 2 * count;  // straight = 2
+			count = matrix.numHandsOfRank(player, hand, StupidEval.FLUSH);
+			if (count == 0) return total;
+			total += 2 * count;  // flush = 4
+			count = matrix.numHandsOfRank(player, hand, StupidEval.FULL_HOUSE);
+			if (count == 0) return total;
+			total += 2 * count; // full house = 6
+			count = matrix.numHandsOfRank(player, hand, StupidEval.QUADS);
+			if (count == 0) return total;
+			total += 4 * count; // quads = 10
+			count = matrix.numHandsOfRank(player, hand, StupidEval.STRAIGHT_FLUSH);
+			if (count == 0) return total;
+			total += 5 * count; // quads = 15
+			count = matrix.numHandsOfRank(player, hand, StupidEval.ROYAL_FLUSH);
+			if (count == 0) return total;
+			total += 10 * count; // royal = 25
+			return total;
+		}
+		
+		// Front royalty
+		public final int getFrontRoyaltyValue(int player, OfcHandMatrix matrix) {
+			int total = 0;
+			int count = 0;
+			// 1 point for 66, 1 additional point for each rank over
+			for (int rank = 4; rank < 13; rank++) {
+				count = matrix.numHandsOfRank(player, 0,
+											  StupidEval.FRONT_PAIR_RANKS[rank]);
+				if (count == 0) return total;
+				total += count;
 			}
+			// 222 is worth 10 points, one more than AA
+			// Each additional rank of trips is worth 1 point.
+			for (int rank = 0; rank < 13; rank++) {
+				count = matrix.numHandsOfRank(player, 0,
+											  StupidEval.FRONT_TRIP_RANKS[rank]);
+				if (count == 0) return total;
+				total += count;
+			}
+			return total;
+		}
+		
+		public final int score(OfcHandMatrix matrix) {
+			int total = 0;
+			total += FANTASYLAND_VALUE *
+				(matrix.numHandsOfRank(0, 0, StupidEval.FANTASYLAND_THRESHOLD) -
+				 matrix.numHandsOfRank(1, 0, StupidEval.FANTASYLAND_THRESHOLD));
+
+			total +=
+				get5CardRoyaltyValue(0, 2, matrix) -
+				get5CardRoyaltyValue(1, 2, matrix);
+			total += 2 * (
+				get5CardRoyaltyValue(0, 1, matrix) -
+				get5CardRoyaltyValue(1, 1, matrix));
+			total +=
+				getFrontRoyaltyValue(0, matrix) -
+				getFrontRoyaltyValue(1, matrix);
+			total += matrix.numP1Wins(0) * SCOOPED_VALUE;
+			total += matrix.numP1Wins(1) * -1;
+			total += matrix.numP1Wins(2) * 1;
+			total += matrix.numP1Wins(3) * SCOOPING_VALUE;
+
 			return total;
 		}
 	}
 
-	static class OldScorer extends AbstractScorer {
-		@Override
-		public int getFantasylandValue(CompleteOfcHand hand) {
-			return 0;
-		}
-
-		@Override
-		public String getCacheFile() {
-			return "old.txt";
-		}
-	}
-
-	static final class OldFantasylandScorer extends OldScorer {
-		@Override
-		public int getFantasylandValue(CompleteOfcHand hand) {
-			if (isFantasyland(hand)) {
-				return FANTASYLAND_VALUE;
-			}
-			return 0;
-		}
-
-		@Override
-		public String getCacheFile() {
-			return "old-fantasyland.txt";
-		}
-	}
-
-	static class NewScorer extends AbstractScorer {
-		@Override
-		public int getFantasylandValue(CompleteOfcHand hand) {
-			return 0;
-		}
-
-		@Override
-		public String getCacheFile() {
-			return "new.txt";
-		}
-	}
-
-	static final class NewFantasylandScorer extends NewScorer {
-		@Override
-		public int getFantasylandValue(CompleteOfcHand hand) {
-			if (isFantasyland(hand)) {
-				return FANTASYLAND_VALUE;
-			}
-			return 0;
-		}
-
+	static final class NewFantasylandScorer extends AbstractScorer {
 		@Override
 		public String getCacheFile() {
 			return "new-fantasyland.txt";
 		}
 	}
-	
+
 	private static final Scorer NEW_FL_SCORER = new NewFantasylandScorer();
 	
 	public static Scorer getScorer() {
