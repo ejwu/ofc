@@ -171,6 +171,11 @@ public class GameState {
 		counter.addAndGet(numStates);
 		statesSolvedByStreet.add(street, numStates);
 	}
+
+	// Do some optimization if there are no flush draws possible
+	private boolean hasFlushDraw() {
+		return player1.hasFlushDraw() || player2.hasFlushDraw();
+	}
 	
 	/**
 	 * Generate the value of each best state reachable from this one, i.e., optimal setting for each card. // lies

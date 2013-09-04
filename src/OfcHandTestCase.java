@@ -1,4 +1,5 @@
 import junit.framework.TestCase;
+import static org.junit.Assert.*;
 
 public abstract class OfcHandTestCase extends TestCase {
 
@@ -246,6 +247,50 @@ public abstract class OfcHandTestCase extends TestCase {
 		assertEquals(copy, hand1);
 		hand1.toKeyString();
 		assertEquals(copy, hand1);
+	}
+
+	public void testHasFlushDrawEmptyHand() {
+		assertTrue(hand1.hasFlushDraw());
+	}
+	
+	public void testHasFlushDrawEmptyMiddle() {
+		hand1.setHand("AcAd//KhKd", deck);
+		assertTrue(hand1.hasFlushDraw());
+	}
+	
+	public void testHashFlushDrawWithMiddleOneCard() {
+		hand1.setHand("AcAd/Ks/TcTh", deck);
+		assertTrue(hand1.hasFlushDraw());
+	}
+	
+	public void testHasFlushDrawWithMiddleSuited() {
+		hand1.setHand("AcAd/KhQhJh/TcTh", deck);
+		assertTrue(hand1.hasFlushDraw());
+	}
+	
+	public void testHasFlushDrawEmptyBack() {
+		hand1.setHand("AcAd/KhKd/", deck);
+		assertTrue(hand1.hasFlushDraw());
+	}
+	
+	public void testHashFlushDrawWithBackOneCard() {
+		hand1.setHand("AcAd/TcTh/Ks", deck);
+		assertTrue(hand1.hasFlushDraw());
+	}
+
+	public void testHasFlushDrawWithBack() {
+		hand1.setHand("AcAd/TcTh/KhQhJh", deck);
+		assertTrue(hand1.hasFlushDraw());
+	}
+	
+	public void testNoFlushDraw() {
+		hand1.setHand("AcAd/KcKd/QcQd", deck);
+		assertFalse(hand1.hasFlushDraw());
+	}
+	
+	public void testNoFlushDrawEmptyFront() {
+		hand1.setHand("/KcKd/QcQd", deck);
+		assertFalse(hand1.hasFlushDraw());
 	}
 	
 	// TODO: many more tests, especially for scoring

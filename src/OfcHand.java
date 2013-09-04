@@ -68,7 +68,8 @@ public interface OfcHand {
 
 	// use for pruning the search space
 	boolean willBeFouled();
-
+	boolean hasFlushDraw();
+	
 	int getStreet();
 	
 	/**

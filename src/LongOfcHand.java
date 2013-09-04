@@ -15,6 +15,9 @@ public class LongOfcHand extends CachedValueOfcHand {
 	protected int frontSize;
 	protected int middleSize;
 	protected int backSize;
+
+	private boolean hasMiddleFlushDraw = true;
+	private boolean hasBackFlushDraw = true;
 	
 	public LongOfcHand() {
 		super();
@@ -82,9 +85,12 @@ public class LongOfcHand extends CachedValueOfcHand {
 		}
 		back |= card.mask;
 		backSize++;
-
+		
 		if (getBackSize() == BACK_SIZE) {
 			completeBack();
+			hasBackFlushDraw = false;
+		} else if (hasBackFlushDraw && BACK_SIZE > 1) {
+			hasBackFlushDraw = CardSetUtils.hasFlushDraw(back);
 		}
 	}
 
@@ -101,6 +107,9 @@ public class LongOfcHand extends CachedValueOfcHand {
 
 		if (getMiddleSize() == MIDDLE_SIZE) {
 			completeMiddle();
+			hasMiddleFlushDraw = false;
+		} else if (hasMiddleFlushDraw && MIDDLE_SIZE > 1) {
+			hasMiddleFlushDraw = CardSetUtils.hasFlushDraw(middle);
 		}
 	}
 
@@ -131,7 +140,12 @@ public class LongOfcHand extends CachedValueOfcHand {
 	public boolean willBeFouled() {
 		return willBeFouled;
 	}
-
+	
+	@Override
+	public boolean hasFlushDraw() {
+		return hasMiddleFlushDraw || hasBackFlushDraw;
+	}
+	
 	/**
 	 * Fill the ranks and suits arrays with the value of the hand.
 	 */
