@@ -1,8 +1,10 @@
 import java.util.List;
+import java.util.Map;
 
 import org.pokersource.game.Deck;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 public class OfcDeck {
 
@@ -47,8 +49,30 @@ public class OfcDeck {
 		return card;
 	}
 	
-	public OfcCard[] asList() {
+	public OfcCard[] toArray() {
 		return CardSetUtils.asCards(cardMask);
+	}
+	
+	/**
+	 * Return a count of the number of cards in the deck for each rank.  Key to the map is the first card seen of that rank.
+	 * @return
+	 */
+	public Map<OfcCard, Integer> byRankCount() {
+		Map<OfcCard, Integer> rankCount = Maps.newHashMap();
+		Map.Entry<OfcCard, Integer> currentEntry = null;
+		for (OfcCard card : CardSetUtils.asCards(cardMask)) {
+			if (currentEntry != null && currentEntry.getKey().getRank() == card.getRank()) {
+				currentEntry.setValue(currentEntry.getValue() + 1);
+			} else {
+				rankCount.put(card,  1);
+				for (Map.Entry<OfcCard, Integer> entry : rankCount.entrySet()) {
+					if (entry.getKey().getRank() == card.getRank()) {
+						currentEntry = entry;
+					}
+				}
+			}
+		}
+		return rankCount;
 	}
 	
 	@Override

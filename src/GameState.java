@@ -187,7 +187,7 @@ public class GameState {
 
 		Map<GameState, Double> bestScores = Maps.newHashMap();
 		
-		for (OfcCard card : CardSetUtils.asCards(deck.getMask())) {
+		for (OfcCard card : deck.toArray()) {
 			Map<GameState, Double> allScoresForCard = Maps.newHashMap();
 			
 			for (OfcHand hand : player1.generateHands(card)) {

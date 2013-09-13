@@ -8,8 +8,6 @@ import com.google.common.collect.Lists;
 public class CardSetUtils {
 	// Cache of cardMask by rank and suit
 	private static long[][] cardMasks;
-	
-
 	private static long[] suitMasks;
 	
 	static {
@@ -22,7 +20,6 @@ public class CardSetUtils {
 				suitMasks[s] |= card;
 			}
 		}
-		
 	}
 	
 	/**
@@ -56,6 +53,9 @@ public class CardSetUtils {
 		return true;
 	}
 	
+	/**
+	 * Return the cards in this mask in descending order by rank, then suit.
+	 */
 	public static OfcCard[] asCards(long mask) {
 		OfcCard[] cards = new OfcCard[Long.bitCount(mask)];
 		int i = 0;
