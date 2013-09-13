@@ -3,6 +3,9 @@ import org.pokersource.game.Deck;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 
+import gnu.trove.map.TLongLongMap;
+import gnu.trove.map.hash.TLongLongHashMap;
+
 public class LongOfcHand extends CachedValueOfcHand {
 
 	@VisibleForTesting
@@ -18,6 +21,8 @@ public class LongOfcHand extends CachedValueOfcHand {
 
 	private boolean hasMiddleFlushDraw = true;
 	private boolean hasBackFlushDraw = true;
+
+	static TLongLongMap evalCache = new TLongLongHashMap();
 	
 	public LongOfcHand() {
 		super();
@@ -160,13 +165,15 @@ public class LongOfcHand extends CachedValueOfcHand {
 	@Override
 	public long getFrontRank() {
 		if (frontValue == UNSET) {
-			if (getFrontSize() != FRONT_SIZE) {
-				throw new IllegalStateException("Front not complete");
+			if (!evalCache.containsKey(front)) {
+				int[] ranks = new int[FRONT_SIZE];
+				int[] suits = new int[FRONT_SIZE];
+				convertForEval(front, ranks, suits, FRONT_SIZE);
+				frontValue = StupidEval.eval3(ranks);
+				evalCache.put(front, frontValue);
+			} else {
+				frontValue = evalCache.get(front);
 			}
-			int[] ranks = new int[FRONT_SIZE];
-			int[] suits = new int[FRONT_SIZE];
-			convertForEval(front, ranks, suits, FRONT_SIZE);
-			frontValue = StupidEval.eval3(ranks);
 		}
 		return frontValue;
 	}
@@ -174,13 +181,15 @@ public class LongOfcHand extends CachedValueOfcHand {
 	@Override
 	public long getMiddleRank() {
 		if (middleValue == UNSET) {
-			if (getMiddleSize() != MIDDLE_SIZE) {
-				throw new IllegalStateException("Middle not complete");
+			if (!evalCache.containsKey(middle)) {
+				int[] ranks = new int[MIDDLE_SIZE];
+				int[] suits = new int[MIDDLE_SIZE];
+				convertForEval(middle, ranks, suits, MIDDLE_SIZE);
+				middleValue = StupidEval.eval(ranks, suits);
+				evalCache.put(middle, middleValue);
+			} else {
+				middleValue = evalCache.get(middle);
 			}
-			int[] ranks = new int[MIDDLE_SIZE];
-			int[] suits = new int[MIDDLE_SIZE];
-			convertForEval(middle, ranks, suits, MIDDLE_SIZE);
-			middleValue = StupidEval.eval(ranks, suits);
 		}
 		return middleValue;
 	}
@@ -188,13 +197,15 @@ public class LongOfcHand extends CachedValueOfcHand {
 	@Override
 	public long getBackRank() {
 		if (backValue == UNSET) {
-			if (getBackSize() != BACK_SIZE) {
-				throw new IllegalStateException("Back not complete");
+			if (!evalCache.containsKey(back)) {
+				int[] ranks = new int[BACK_SIZE];
+				int[] suits = new int[BACK_SIZE];
+				convertForEval(back, ranks, suits, BACK_SIZE);
+				backValue = StupidEval.eval(ranks, suits);
+				evalCache.put(back, backValue);
+			} else {
+				backValue = evalCache.get(back);
 			}
-			int[] ranks = new int[BACK_SIZE];
-			int[] suits = new int[BACK_SIZE];
-			convertForEval(back, ranks, suits, BACK_SIZE);
-			backValue = StupidEval.eval(ranks, suits);
 		}
 		return backValue;
 	}
