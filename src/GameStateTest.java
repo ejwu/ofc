@@ -45,4 +45,13 @@ public class GameStateTest extends TestCase {
 		assertEquals(state1, state2);
 	}
 	
+	/*
+	 * Golden values:
+	 * 	player1.setHand("Kd3hKs/As2d9d/JdJc7c7d", deck);
+		player2.setHand("QcAd/6d7sKc/AhKhQhJhTh", deck);
+	 *  -11.661805
+	 * 
+	 */
+	
+	
 }

@@ -263,21 +263,10 @@ public class Scorers {
 			return "new-fantasyland.txt";
 		}
 	}
-
-	private static final List<Scorer> SCORERS = ImmutableList.<Scorer> of(
-			new OldScorer(), new OldFantasylandScorer(),
-			new NewScorer(), new NewFantasylandScorer());
-
-	private static final List<Scorer> OLD_SCORERS = ImmutableList
-			.<Scorer> of(new OldScorer(), new OldFantasylandScorer());
-
-	private static final List<Scorer> NEW_SCORERS = ImmutableList
-			.<Scorer>of(new NewScorer(), new NewFantasylandScorer());
 	
-	private static final Scorer[] NEW_FL_SCORER = new Scorer[] {
-		new NewFantasylandScorer()};
+	private static final Scorer NEW_FL_SCORER = new NewFantasylandScorer();
 	
-	public static Scorer[] getScorers() {
+	public static Scorer getScorer() {
 		return NEW_FL_SCORER;
 	}
 }
