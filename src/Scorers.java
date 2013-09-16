@@ -7,24 +7,6 @@ import com.google.common.collect.ImmutableMap;
 public class Scorers {
 	public static final boolean DEBUG = false;
 
-	private static final Map<Long, Integer> OLD_BACK_ROYALTY_MAP = ImmutableMap
-			.<Long, Integer> builder()
-			.put(StupidEval.STRAIGHT, 2)
-			.put(StupidEval.FLUSH, 4)
-			.put(StupidEval.FULL_HOUSE, 6)
-			.put(StupidEval.QUADS, 8)
-			.put(StupidEval.STRAIGHT_FLUSH, 10)
-			.put(StupidEval.ROYAL_FLUSH, 20).build();
-
-	private static final Map<Long, Integer> NEW_BACK_ROYALTY_MAP = ImmutableMap
-			.<Long, Integer> builder()
-			.put(StupidEval.STRAIGHT, 2)
-			.put(StupidEval.FLUSH, 4)
-			.put(StupidEval.FULL_HOUSE, 6)
-			.put(StupidEval.QUADS, 10)
-			.put(StupidEval.STRAIGHT_FLUSH, 15)
-			.put(StupidEval.ROYAL_FLUSH, 25).build();
-
 	private static final int SCOOPING_VALUE = 6;
 	private static final int SCOOPED_VALUE = -6;
 	static final int FANTASYLAND_VALUE = 12;
@@ -51,8 +33,6 @@ public class Scorers {
 	}
 	
 	private static abstract class AbstractScorer implements Scorer {
-		protected abstract Map<Long, Integer> getBackRoyaltyMap();
-
 		// NOTE: actually never mind, these must be the same. Don't mess with
 		// this
 		public String getKey() {
@@ -60,8 +40,6 @@ public class Scorers {
 		}
 
 		public final int getBackValue(CompleteOfcHand hand) {
-			Map<Long, Integer> backRoyaltyMap = getBackRoyaltyMap();
-
 			// Stupid integer division hack to zero out all the insignificant
 			// digits so we can use a map to look up
 			// royalty values
@@ -82,17 +60,10 @@ public class Scorers {
 				return 25;
 			}
 			
-			/*
-			if (backRoyaltyMap.containsKey(rank)) {
-				return backRoyaltyMap.get(rank);
-			}
-			*/
 			return 0;
 		}
 		
 		public final int getMiddleValue(CompleteOfcHand hand) {
-			Map<Long, Integer> backRoyaltyMap = getBackRoyaltyMap();
-
 			// Stupid integer division hack to zero out all the insignificant
 			// digits so we can use a map to look up
 			// royalty values
@@ -112,12 +83,6 @@ public class Scorers {
 				return 50;
 			}
 
-			/*
-			 * if (backRoyaltyMap.containsKey(rank)) {
-			 
-				return backRoyaltyMap.get(rank) * 2;
-			}
-			*/
 			return 0;
 		}
 
@@ -203,10 +168,6 @@ public class Scorers {
 	}
 
 	static class OldScorer extends AbstractScorer {
-		protected Map<Long, Integer> getBackRoyaltyMap() {
-			return OLD_BACK_ROYALTY_MAP;
-		}
-
 		@Override
 		public int getFantasylandValue(CompleteOfcHand hand) {
 			return 0;
@@ -234,10 +195,6 @@ public class Scorers {
 	}
 
 	static class NewScorer extends AbstractScorer {
-		protected Map<Long, Integer> getBackRoyaltyMap() {
-			return NEW_BACK_ROYALTY_MAP;
-		}
-
 		@Override
 		public int getFantasylandValue(CompleteOfcHand hand) {
 			return 0;
