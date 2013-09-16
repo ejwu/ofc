@@ -20,7 +20,7 @@ public class OfcSolver {
 		System.out.println(gs);
 
 		long timestamp = System.currentTimeMillis();	
-		System.out.println(gs.getValue(Scorers.getScorer(), true));
+		System.out.println(gs.getValue(Scorers.getScorer()));
 		System.out.println((System.currentTimeMillis() - timestamp) + " ms");
 		gs.shutdown();
 	}
