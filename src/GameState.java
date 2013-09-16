@@ -18,11 +18,16 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ConcurrentHashMultiset;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Table;
 
@@ -52,6 +57,8 @@ public class GameState {
 	private static final Multiset<Double> statesSolvedByStreet;
 	private static final long startTime = System.currentTimeMillis();
 	private static long timestamp = 0L;
+
+	private static long skipped = 0L;
 	
 	static {
 		statesSolved = new AtomicLong(0L);
@@ -165,6 +172,7 @@ public class GameState {
 			sb.append(street + ": " + statesSolvedByStreet.count(street) + "\n");
 		}
 		sb.append(CACHE.stats() + "\n");
+		sb.append("skipped: " + skipped + "\n");
 		return sb.toString();
 	}
 	
@@ -182,40 +190,53 @@ public class GameState {
 	/**
 	 * Generate the value of each best state reachable from this one, i.e., optimal setting for each card. // lies
 	 */
-	private Map<GameState, Double> generateBestStateValues(Scorers.Scorer scorer, boolean concurrent) {
+	private Multimap<GameState, Double> generateBestStateValues(Scorers.Scorer scorer, boolean concurrent) {
 		if (player1.isComplete()) {
 			throw new IllegalStateException("Shouldn't generate new states for complete hand");
 		}
 
-		Map<GameState, Double> bestScores = Maps.newHashMap();
+		// ListMultimap allows duplicate key/value pairs
+		ListMultimap<GameState, Double> bestScores = ArrayListMultimap.create();
+
+		OfcCard previousCard = null;
+		GameState bestSet = null;
+		double bestValue = -1000000000000.0;
 		
 		for (OfcCard card : deck.toArray()) {
-			Map<GameState, Double> allScoresForCard = Maps.newHashMap();
+			// If this state has no flush draws, settings using cards of the same rank will be identical.
+			// Skip recalculating the values in these cases.
+			if (!hasFlushDraw() && previousCard != null && card.getRank() == previousCard.getRank()) {
+				skipped++;
+				bestScores.put(bestSet, bestValue);
+			} else {
+				Map<GameState, Double> allScoresForCard = Maps.newHashMap();
 			
-			for (OfcHand hand : player1.generateHands(card)) {
-				GameState candidateState = new GameState(player2, hand, new OfcDeck(deck.withoutCard(card)));
-				// Score is from opponent's perspective, so we flip it
-				double scoreForHand = candidateState.getValue(scorer) * -1;
-				allScoresForCard.put(candidateState, scoreForHand);
-				// it would be nice to filter out hopeless settings here
-			}
-
-			// Now we have the score for each setting of this card, filter out the unusable ones
-			boolean instrumented = false;
-
-			// TODO: Double.MIN_VALUE doesn't compare properly.
-			GameState bestSet = null;
-			double bestValue = -1000000000000.0;
-			for (Map.Entry<GameState, Double> entry : allScoresForCard.entrySet()) {
-				if (entry.getValue() > bestValue) {
-					bestSet = entry.getKey();
-					bestValue = entry.getValue();
+				for (OfcHand hand : player1.generateHands(card)) {
+					GameState candidateState = new GameState(player2, hand, new OfcDeck(deck.withoutCard(card)));
+					// Score is from opponent's perspective, so we flip it
+					double scoreForHand = candidateState.getValue(scorer) * -1;
+					allScoresForCard.put(candidateState, scoreForHand);
+					// it would be nice to filter out hopeless settings here
 				}
-			}
-			bestScores.put(bestSet, bestValue);
-			if (!instrumented) {
-				instrumented = true;
-				updateInstrumentation(bestSet.getStreet(), 1);
+
+				// Now we have the score for each setting of this card, filter out the unusable ones
+				boolean instrumented = false;
+
+				// TODO: Double.MIN_VALUE doesn't compare properly.
+				bestSet = null;
+				bestValue = -1000000000000.0;
+				for (Map.Entry<GameState, Double> entry : allScoresForCard.entrySet()) {
+					if (entry.getValue() > bestValue) {
+						bestSet = entry.getKey();
+						bestValue = entry.getValue();
+					}
+				}
+				bestScores.put(bestSet, bestValue);
+				if (!instrumented) {
+					instrumented = true;
+					updateInstrumentation(bestSet.getStreet(), 1);
+				}
+				previousCard = card;
 			}
 		}
 		
@@ -225,10 +246,10 @@ public class GameState {
 		}
 
 		// sanity check
-		if (bestScores.size() > (52 * 3)) {
-			throw new IllegalStateException("shouldn't happen");
+		if (bestScores.keySet().size() > deck.toArray().length) {
+			throw new IllegalStateException("Returning more settings than cards available");
 		}
-
+		
 		return bestScores;
 	}
 	
@@ -258,7 +279,9 @@ public class GameState {
 
 		double value;
 		if (getStreet() > 11.5 && concurrent) {
-			value = getValueConcurrent(scorer);
+//			value = getValueConcurrent(scorer);
+			// TODO: Fix this
+			value = getValueSequential(scorer);
 		} else {
 			value = getValueSequential(scorer);
 		}
@@ -295,16 +318,20 @@ public class GameState {
 	}
 
 	public double getValueSequential(Scorers.Scorer scorer) {
-		Map<GameState, Double> bestStates = generateBestStateValues(scorer, false);
+		Multimap<GameState, Double> bestStates = generateBestStateValues(scorer, false);
 		double value = 0.0;
 		int count = 0;
 		for (GameState state : bestStates.keySet()) {
-			count++;
-			value += bestStates.get(state);
+			int stateCount = bestStates.get(state).size();
+			count += stateCount;
+			value += (bestStates.get(state).iterator().next() * stateCount);
 		}
 		return value / count;
 	}
 
+	// TODO: Does this work at all?  I don't think so...
+	// Fix for multimap if you uncomment this
+	/*
 	public double getValueConcurrent(final Scorers.Scorer scorer) {
 		List<Future<Double>> results = Lists.newArrayList();
 		Map<GameState, Double> bestStates = generateBestStateValues(scorer, false);
@@ -329,7 +356,7 @@ public class GameState {
 		// Current player's value is the negative of the opponent's value.
 		return value / results.size() * -1;
 	}
-		
+*/		
 	private String toFileString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getStreet());
