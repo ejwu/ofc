@@ -210,7 +210,7 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 			// Scan p1 forward until he can beat p2
 			index[0] = firstIndexBigger(sortedRanks[0],
 									   sortedRanks[1][index[1]],
-									   index[0] + 1);
+									   index[0]);
 			if (index[0] >= deckSize) {
 				// P1 couldn't muster a winning hand. No more wins to count.
 				break;
