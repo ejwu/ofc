@@ -42,7 +42,8 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 	// How many cards out of deckSize foul player[p]'s hand
 	private final int[] foulCount = new int[2];
 
-	// the index of the subhand of player[i] which varies in the matrix.
+	// varies[p] is the index of p's subhand which varies in the matrix,
+	// or -1 if the player always fouls.
 	private final int[] varies = new int[2];
 
 	// stableRanks[p][h], when h != varies[p], is the rank of player[p]'s stable
@@ -67,24 +68,35 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 		deckSize = cards.length;
 		ranks = new long[2][deckSize];
 		sortedRanks = new long[2][deckSize];
-		OfcHand[] startHands = new OfcHand[] {p1, p2};
-		isFouled = new boolean[2][deckSize]; // TODO:PICKUP
+		// TODO(abliss): remove casts
+		LongOfcHand[] startHands = new LongOfcHand[] {
+			(LongOfcHand) p1, (LongOfcHand) p2};
+		isFouled = new boolean[2][deckSize];
 		for (int p = 0; p < 2; p++) {
-			OfcHand startHand = startHands[p];
-			if (startHands[p].getFrontSize() < OfcHand.FRONT_SIZE) {
+			LongOfcHand startHand = startHands[p];
+			if (startHand.willBeFouled()) {
+				// If the hand is fouled anyway, we don't care about dealing it
+				// out.
+				foulCount[p] = deckSize;
+				varies[p] = -1;
+				stableRanks[p][FRONT] = FOULED;
+				stableRanks[p][MIDDLE] = FOULED;
+				stableRanks[p][BACK] = FOULED;
+				for (int i = deckSize - 1; i >= 0; i--) {
+					isFouled[p][i] = true;
+				}
+			} else if (startHand.getFrontSize() < OfcHand.FRONT_SIZE) {
 				varies[p] = FRONT;
 				stableRanks[p][MIDDLE] = startHand.getMiddleRank();
 				stableRanks[p][BACK] = startHand.getBackRank();
 				for (int i = deckSize - 1; i >= 0; i--) {
-					OfcHand hand = startHand.copy(); hand.addFront(cards[i]);
-					long rank = hand.getFrontRank();
+					long rank = startHand.getFrontRank(cards[i]);
 					// TODO(abliss): if we were willing to carry the index
 					// backmap through the sorting, we could do this faster by
 					// zeroing out the fouled hands after we sort the ranks.
-					if (hand.willBeFouled()) {
+					if (rank == FOULED) {
 						isFouled[p][i] = true;
 						foulCount[p]++;
-						rank = FOULED;
 					}
 					sortedRanks[p][i] = ranks[p][i] = rank;
 				}
@@ -93,12 +105,10 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 				varies[p] = MIDDLE;
 				stableRanks[p][BACK] = startHand.getBackRank();
 				for (int i = deckSize - 1; i >= 0; i--) {
-					OfcHand hand = startHand.copy(); hand.addMiddle(cards[i]);
-					long rank = hand.getMiddleRank();
-					if (hand.willBeFouled()) {
+					long rank = startHand.getMiddleRank(cards[i]);
+					if (rank == FOULED) {
 						isFouled[p][i] = true;
 						foulCount[p]++;
-						rank = FOULED;
 					}
 					sortedRanks[p][i] = ranks[p][i] = rank;
 				}
@@ -107,12 +117,10 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 				stableRanks[p][MIDDLE] = startHand.getMiddleRank();
 				varies[p] = BACK;
 				for (int i = deckSize - 1; i >= 0; i--) {
-					OfcHand hand = startHand.copy(); hand.addBack(cards[i]);
-					long rank = hand.getBackRank();
-					if (hand.willBeFouled()) {
+					long rank = startHand.getBackRank(cards[i]);
+					if (rank == FOULED) {
 						isFouled[p][i] = true;
 						foulCount[p]++;
-						rank = FOULED;
 					}
 					sortedRanks[p][i] = ranks[p][i] = rank;
 				}
@@ -131,18 +139,33 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 	// compute winCount values when one side fouls. Returns totalFouls
 	private void countFouls() {
 		final int[] foulWins = new int[]{0, 3};
-		for (int p = 0; p < 2; p++) {
-			for (int i = deckSize - 1; i >= 0; i--) {
-				if (isFouled[p][i]) {
-					// Set wincount everywhere opponent didn't foul, by
-					// inclusion-exclusion:
-					int count = (deckSize - 1 - foulCount[1 - p]);
-					// foulCount will be off by one for this purpose if it
-					// includes the case where the opponent got the same card.
-					if (isFouled[1 - p][i]) {
-						count++;
+		if (varies[0] < 0) {
+			// p1 always fouls
+			if (varies[1] >= 0) {
+				// but p2 doesn't.
+				winCount[foulWins[0]] = deckSize * (deckSize - 1);
+			}
+		} else if (varies[1] < 0) {
+			// vice versa.
+			winCount[foulWins[1]] += deckSize * (deckSize - 1);
+		} else {
+			// Neither player always fouls.
+			for (int p = 0; p < 2; p++) {
+				if (foulCount[p] > 0) {
+					for (int i = deckSize - 1; i >= 0; i--) {
+						if (isFouled[p][i]) {
+							// Set wincount everywhere opponent didn't foul, by
+							// inclusion-exclusion:
+							int count = (deckSize - 1 - foulCount[1 - p]);
+							// foulCount will be off by one for this purpose if
+							// it includes the case where the opponent got the
+							// same card.
+							if (isFouled[1 - p][i]) {
+								count++;
+							}
+							winCount[foulWins[p]] += count;
+						}
 					}
-					winCount[foulWins[p]] += count;
 				}
 			}
 		}
@@ -161,7 +184,7 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 	
 	// Compute foulless winCount values when varies[0] == varies[1]
 	private void countWinsVariesSame() {
-		if ((foulCount[0] >= deckSize) || (foulCount[1] >= deckSize)) {
+		if ((foulCount[0] == deckSize) || (foulCount[1] == deckSize)) {
 			// one player always fouls. No foulless wins to count.
 			return;
 		}
@@ -193,7 +216,7 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 				break;
 			}
 			// P1's hand, and all hands better than it, are winning.
-			final int numWinners = deckSize - index[0] + 1;
+			final int numWinners = deckSize - index[0];
 			// How many *new* hands are we beating?
 			int lastIndex1 = index[1];
 			index[1] = firstIndexBigger(sortedRanks[1],
@@ -229,7 +252,7 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 	
 	// Compute foulless winCount values when varies[0] != varies[1]
 	private void countWinsVariesDifferent() {
-		if ((foulCount[0] >= deckSize) || (foulCount[1] >= deckSize)) {
+		if ((foulCount[0] == deckSize) || (foulCount[1] == deckSize)) {
 			// one player always fouls. No foulless wins to count.
 			return;
 		}
@@ -278,10 +301,9 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 	@Override
 	public int numHandsOfRank(int player, int h, long rank) {
 		// shortcut if hand is always fouled
-		if (foulCount[player] == deckSize) {
+		if (varies[player] < 0) {
 			return 0;
 		}
-		int count = 0;
 		
 		if (varies[player] != h) {
 			if (stableRanks[player][h] >= rank) {
@@ -290,14 +312,10 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 				return 0;
 			}
 		} else {
-			for (int i = deckSize - 1; i >= 0; i--) {
-				if (!isFouled[player][i] &&
-					(ranks[player][i] >= rank)) {
-					count += deckSize - 1;
-				}
-			}
+			int ind = firstIndexBigger(sortedRanks[player],
+									   rank - 1, foulCount[player]);
+			return (deckSize - ind) * (deckSize - 1);
 		}
-		return count;
 	}
 	
 	@Override

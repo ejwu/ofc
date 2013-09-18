@@ -120,6 +120,66 @@ public class LongOfcHand extends CachedValueOfcHand {
 		}
 	}
 
+
+	private static long get5CardRank(long subhand) {
+		if (evalCache.containsKey(subhand)) {
+			return evalCache.get(subhand);
+		}
+		int[] ranks = new int[BACK_SIZE];
+		int[] suits = new int[BACK_SIZE];
+		convertForEval(subhand, ranks, suits, BACK_SIZE);
+		long rank = StupidEval.eval(ranks, suits);
+		evalCache.put(subhand, rank);
+		return rank;
+	}
+
+	private static long get3CardRank(long subhand) {
+		if (evalCache.containsKey(subhand)) {
+			return evalCache.get(subhand);
+		}
+		int[] ranks = new int[FRONT_SIZE];
+		int[] suits = new int[FRONT_SIZE];
+		convertForEval(subhand, ranks, suits, FRONT_SIZE);
+		long rank = StupidEval.eval3(ranks);
+		evalCache.put(subhand, rank);
+		return rank;
+	}
+
+	// Get the rank of the front hand if completed by card, or -1 for foul
+	// Assumes that this is the last card.
+	public long getFrontRank(OfcCard card) {
+		long rank = get3CardRank(front | card.mask);
+		if (rank > getMiddleRank()) {
+			return -1;
+		} else {
+			return rank;
+		}
+	}
+
+	// Get the rank of the middle hand if completed by card, or -1 for foul
+	// Assumes that this is the last card.
+	public long getMiddleRank(OfcCard card) {
+		long rank = get5CardRank(middle | card.mask);
+		if (rank >= getBackRank()) {
+			return -1;
+		} else if (rank < getFrontRank()) {
+			return -1;
+		} else {
+			return rank;
+		}
+	}
+	
+	// Get the rank of the back hand if completed by card, or -1 for foul
+	// Assumes that this is the last card.
+	public long getBackRank(OfcCard card) {
+		long rank = get5CardRank(back | card.mask);
+		if (rank <= getMiddleRank()) {
+			return -1;
+		} else {
+			return rank;
+		}
+	}
+
 	@Override
 	public void addFront(OfcCard card) {
 		if (getFrontSize() >= FRONT_SIZE) {
@@ -165,15 +225,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 	@Override
 	public long getFrontRank() {
 		if (frontValue == UNSET) {
-			if (!evalCache.containsKey(front)) {
-				int[] ranks = new int[FRONT_SIZE];
-				int[] suits = new int[FRONT_SIZE];
-				convertForEval(front, ranks, suits, FRONT_SIZE);
-				frontValue = StupidEval.eval3(ranks);
-				evalCache.put(front, frontValue);
-			} else {
-				frontValue = evalCache.get(front);
-			}
+			frontValue = get3CardRank(front);
 		}
 		return frontValue;
 	}
@@ -181,15 +233,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 	@Override
 	public long getMiddleRank() {
 		if (middleValue == UNSET) {
-			if (!evalCache.containsKey(middle)) {
-				int[] ranks = new int[MIDDLE_SIZE];
-				int[] suits = new int[MIDDLE_SIZE];
-				convertForEval(middle, ranks, suits, MIDDLE_SIZE);
-				middleValue = StupidEval.eval(ranks, suits);
-				evalCache.put(middle, middleValue);
-			} else {
-				middleValue = evalCache.get(middle);
-			}
+			middleValue = get5CardRank(middle);
 		}
 		return middleValue;
 	}
@@ -197,15 +241,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 	@Override
 	public long getBackRank() {
 		if (backValue == UNSET) {
-			if (!evalCache.containsKey(back)) {
-				int[] ranks = new int[BACK_SIZE];
-				int[] suits = new int[BACK_SIZE];
-				convertForEval(back, ranks, suits, BACK_SIZE);
-				backValue = StupidEval.eval(ranks, suits);
-				evalCache.put(back, backValue);
-			} else {
-				backValue = evalCache.get(back);
-			}
+			backValue = get5CardRank(back);
 		}
 		return backValue;
 	}
@@ -388,3 +424,4 @@ public class LongOfcHand extends CachedValueOfcHand {
 	}
 
 }
+
