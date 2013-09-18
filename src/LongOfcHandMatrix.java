@@ -65,6 +65,14 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 			throw new IllegalArgumentException(
 				"Wrong streets! " + p1.getStreet() + "," + p2.getStreet());
 		}
+		boolean flushDraw = p1.hasFlushDraw() || p2.hasFlushDraw();
+		if (p1.hasFlushDraw()) {
+			System.out.println("flushdraw " + p1);
+		}
+		if (p2.hasFlushDraw()) {
+			System.out.println("flushdraw " + p2);
+		}
+
 		deckSize = cards.length;
 		ranks = new long[2][deckSize];
 		sortedRanks = new long[2][deckSize];
@@ -72,6 +80,7 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 		LongOfcHand[] startHands = new LongOfcHand[] {
 			(LongOfcHand) p1, (LongOfcHand) p2};
 		isFouled = new boolean[2][deckSize];
+		int lastCardRank = -1;
 		for (int p = 0; p < 2; p++) {
 			LongOfcHand startHand = startHands[p];
 			if (startHand.willBeFouled()) {
@@ -90,39 +99,71 @@ public class LongOfcHandMatrix implements OfcHandMatrix {
 				stableRanks[p][MIDDLE] = startHand.getMiddleRank();
 				stableRanks[p][BACK] = startHand.getBackRank();
 				for (int i = deckSize - 1; i >= 0; i--) {
-					long rank = startHand.getFrontRank(cards[i]);
-					// TODO(abliss): if we were willing to carry the index
-					// backmap through the sorting, we could do this faster by
-					// zeroing out the fouled hands after we sort the ranks.
-					if (rank == FOULED) {
-						isFouled[p][i] = true;
-						foulCount[p]++;
+					OfcCard card = cards[i];
+					if (!flushDraw && card.getRank() == lastCardRank) {
+						if (isFouled[p][i + 1]) {
+							isFouled[p][i] = true;
+							foulCount[p]++;
+						}
+						sortedRanks[p][i] = ranks[p][i] = ranks[p][i + 1];
+					} else {
+
+						lastCardRank = card.getRank();
+						long rank = startHand.getFrontRank(card);
+						// TODO(abliss): if we were willing to carry the index
+						// backmap through the sorting, we could do this faster
+						// by zeroing out the fouled hands after we sort the
+						// ranks.
+						if (rank == FOULED) {
+							isFouled[p][i] = true;
+							foulCount[p]++;
+						}
+						sortedRanks[p][i] = ranks[p][i] = rank;
 					}
-					sortedRanks[p][i] = ranks[p][i] = rank;
 				}
 			} else if (startHand.getMiddleSize() < OfcHand.MIDDLE_SIZE) {
 				stableRanks[p][FRONT] = startHand.getFrontRank();
 				varies[p] = MIDDLE;
 				stableRanks[p][BACK] = startHand.getBackRank();
 				for (int i = deckSize - 1; i >= 0; i--) {
-					long rank = startHand.getMiddleRank(cards[i]);
-					if (rank == FOULED) {
-						isFouled[p][i] = true;
-						foulCount[p]++;
+					OfcCard card = cards[i];
+					if (!flushDraw && card.getRank() == lastCardRank) {
+						if (isFouled[p][i + 1]) {
+							isFouled[p][i] = true;
+							foulCount[p]++;
+						}
+						sortedRanks[p][i] = ranks[p][i] = ranks[p][i + 1];
+					} else {
+						lastCardRank = card.getRank();
+						long rank = startHand.getMiddleRank(card);
+						if (rank == FOULED) {
+							isFouled[p][i] = true;
+							foulCount[p]++;
+						}
+						sortedRanks[p][i] = ranks[p][i] = rank;
 					}
-					sortedRanks[p][i] = ranks[p][i] = rank;
 				}
 			} else {
 				stableRanks[p][FRONT] = startHand.getFrontRank();
 				stableRanks[p][MIDDLE] = startHand.getMiddleRank();
 				varies[p] = BACK;
 				for (int i = deckSize - 1; i >= 0; i--) {
-					long rank = startHand.getBackRank(cards[i]);
-					if (rank == FOULED) {
-						isFouled[p][i] = true;
-						foulCount[p]++;
+					OfcCard card = cards[i];
+					if (!flushDraw && card.getRank() == lastCardRank) {
+						if (isFouled[p][i + 1]) {
+							isFouled[p][i] = true;
+							foulCount[p]++;
+						}
+						sortedRanks[p][i] = ranks[p][i] = ranks[p][i + 1];
+					} else {
+						lastCardRank = card.getRank();
+						long rank = startHand.getBackRank(card);
+						if (rank == FOULED) {
+							isFouled[p][i] = true;
+							foulCount[p]++;
+						}
+						sortedRanks[p][i] = ranks[p][i] = rank;
 					}
-					sortedRanks[p][i] = ranks[p][i] = rank;
 				}
 			}
 			Arrays.sort(sortedRanks[p]);
