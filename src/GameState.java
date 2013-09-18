@@ -240,7 +240,7 @@ public class GameState {
 			}
 		}
 		
-		if (counter.longValue() > 100000) {
+		if (counter.longValue() > 1000000L) {
 			counter.set(0L);
 			System.out.println(getInstrumentation());
 		}
@@ -286,7 +286,7 @@ public class GameState {
 			value = getValueSequential(scorer);
 		}
 		
-		if (getStreet() < 12.0) {
+		if (getStreet() < 11.5) {
 			System.out.println("\n\nSolved");
 			System.out.println(this);
 			System.out.println(value);

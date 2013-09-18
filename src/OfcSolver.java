@@ -13,7 +13,7 @@ public class OfcSolver {
 //		player1.setHand("/8h4c/AsKsQs", deck);
 //		player2.setHand("Td/JdJh/QdQc", deck);
 	
-		player1.setHand("Kd3hKs/As2d9d/JdJc7c7d", deck);
+		player1.setHand("Kd3h/As2d9d/JdJc7c7d", deck);
 		player2.setHand("QcAd/6d7sKc/AhKhQhJhTh", deck);
 
 		GameState gs = new GameState(player1, player2, deck);
