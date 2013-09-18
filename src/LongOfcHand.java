@@ -37,6 +37,8 @@ public class LongOfcHand extends CachedValueOfcHand {
 		this.frontSize = source.frontSize;
 		this.middleSize = source.middleSize;
 		this.backSize = source.backSize;
+		this.hasMiddleFlushDraw = source.hasMiddleFlushDraw;
+		this.hasBackFlushDraw = source.hasBackFlushDraw;
 	}
 	
 	@Override
