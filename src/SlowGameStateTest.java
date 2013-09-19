@@ -7,7 +7,11 @@ import junit.framework.TestCase;
 /**
  * A collection of slow tests to verify that the values for a game state remain the same.
  *
- * Random timing notes: 1-8 take 633s on desktop.  427 in 8, 121 in 7, 62 in 2.
+ * Random timing notes:
+ * 1-8: 278s on desktop.
+ * 2: 10s
+ * 7: 23s
+ * 8: 223s
  */
 public class SlowGameStateTest extends TestCase {
 

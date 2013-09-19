@@ -1,3 +1,4 @@
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -73,6 +74,30 @@ public class OfcDeck {
 			}
 		}
 		return rankCount;
+	}
+	
+// TODO: write some tests for this, given how badly I messed this up
+	public List<List<OfcCard>> byRank() {
+		List<List<OfcCard>> list = Lists.newArrayList();
+
+		int previousRank = -1;
+		List<OfcCard> rankList = Lists.newArrayList();
+		for (OfcCard card : CardSetUtils.asCards(cardMask)) {
+			if (card.getRank() == previousRank) {
+				rankList.add(card);
+			} else {
+				if (!rankList.isEmpty()) {
+					list.add(rankList);
+				}
+				rankList = Lists.newArrayList(card);
+				previousRank = card.getRank();
+			}
+		}
+		if (!rankList.isEmpty()) {
+			list.add(rankList);
+		}
+		
+		return list;
 	}
 	
 	@Override

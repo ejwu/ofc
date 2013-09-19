@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 import org.pokersource.game.Deck;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -16,8 +18,11 @@ public class LongOfcHand extends CachedValueOfcHand {
 	protected int middleSize;
 	protected int backSize;
 
-	private boolean hasMiddleFlushDraw = true;
-	private boolean hasBackFlushDraw = true;
+	private static final int NO_FLUSH_DRAW = -1;
+	private int middleFlushDrawSuit = NO_FLUSH_DRAW;
+	private int backFlushDrawSuit = NO_FLUSH_DRAW;
+	// Update these when the first card is added to the middle or back
+	private boolean[] liveFlushDraws = new boolean[] {false, false, false, false};
 	
 	public LongOfcHand() {
 		super();
@@ -37,8 +42,13 @@ public class LongOfcHand extends CachedValueOfcHand {
 		this.frontSize = source.frontSize;
 		this.middleSize = source.middleSize;
 		this.backSize = source.backSize;
-		this.hasMiddleFlushDraw = source.hasMiddleFlushDraw;
-		this.hasBackFlushDraw = source.hasBackFlushDraw;
+		this.middleFlushDrawSuit = source.middleFlushDrawSuit;
+		this.backFlushDrawSuit = source.backFlushDrawSuit;
+		int index = 0;
+		for (boolean b : source.liveFlushDraws()) {
+			this.liveFlushDraws[index] = b;
+			index++;
+		}
 	}
 	
 	@Override
@@ -90,9 +100,22 @@ public class LongOfcHand extends CachedValueOfcHand {
 		
 		if (getBackSize() == BACK_SIZE) {
 			completeBack();
-			hasBackFlushDraw = false;
-		} else if (hasBackFlushDraw && BACK_SIZE > 1) {
-			hasBackFlushDraw = CardSetUtils.hasFlushDraw(back);
+			backFlushDrawSuit = NO_FLUSH_DRAW;
+		} else if (getBackSize() == 1) {
+			liveFlushDraws[card.getSuit()] = true;
+			backFlushDrawSuit = card.getSuit();
+		} else if (backFlushDrawSuit != NO_FLUSH_DRAW && getBackSize() > 1) {
+			boolean hasFlushDraw = CardSetUtils.hasFlushDraw(back);
+
+			// If this isn't true, both middle and back have a live flush draw of the same suit,
+			// so we don't overwrite want to overwrite the live bit, which should always be true.
+			// It should get overwritten when the other flush draw dies
+			if (middleFlushDrawSuit != backFlushDrawSuit) {
+				liveFlushDraws[backFlushDrawSuit] = hasFlushDraw;
+			}
+			if (!hasFlushDraw) {
+				backFlushDrawSuit = NO_FLUSH_DRAW;
+			}
 		}
 	}
 
@@ -109,9 +132,24 @@ public class LongOfcHand extends CachedValueOfcHand {
 
 		if (getMiddleSize() == MIDDLE_SIZE) {
 			completeMiddle();
-			hasMiddleFlushDraw = false;
-		} else if (hasMiddleFlushDraw && MIDDLE_SIZE > 1) {
-			hasMiddleFlushDraw = CardSetUtils.hasFlushDraw(middle);
+			middleFlushDrawSuit = NO_FLUSH_DRAW;
+		} else if (getMiddleSize() == 1) {
+			liveFlushDraws[card.getSuit()] = true;
+			middleFlushDrawSuit = card.getSuit();
+		} else if (middleFlushDrawSuit != NO_FLUSH_DRAW && getMiddleSize() > 1) {
+			String cs = card.toString();
+			String h = toString();
+			
+			boolean hasFlushDraw = CardSetUtils.hasFlushDraw(middle);
+			// If this isn't true, both middle and back have a live flush draw of the same suit,
+			// so we don't overwrite want to overwrite the live bit, which should always be true.
+			// It should get overwritten when the other flush draw dies
+			if (middleFlushDrawSuit != backFlushDrawSuit) {
+				liveFlushDraws[middleFlushDrawSuit] = hasFlushDraw;
+			}
+			if (!hasFlushDraw) {
+				middleFlushDrawSuit = NO_FLUSH_DRAW;
+			}
 		}
 	}
 
@@ -145,7 +183,12 @@ public class LongOfcHand extends CachedValueOfcHand {
 	
 	@Override
 	public boolean hasFlushDraw() {
-		return hasMiddleFlushDraw || hasBackFlushDraw;
+		return middleFlushDrawSuit != NO_FLUSH_DRAW || backFlushDrawSuit != NO_FLUSH_DRAW;
+	}
+	
+	@Override
+	public boolean[] liveFlushDraws() {
+		return liveFlushDraws;
 	}
 	
 	/**

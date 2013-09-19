@@ -14,6 +14,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.pokersource.game.Deck;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -187,8 +189,46 @@ public class GameState {
 		return player1.hasFlushDraw() || player2.hasFlushDraw();
 	}
 	
+	private boolean[] liveFlushDraws() {
+		boolean[] liveFlushDraws = new boolean[4];
+		for (int i = 0; i < Deck.SUIT_COUNT; i++) {
+			liveFlushDraws[i] = player1.liveFlushDraws()[i] || player2.liveFlushDraws()[i];
+		}
+		return liveFlushDraws;
+	}
+	
+	// Really returning state and value, assume the cache saves us
+	// TODO: maybe check to see if returning Pair helps?
+	private GameState bestSetForCard(OfcCard card, Scorers.Scorer scorer) {
+		// really just a List<Pair>
+		Map<GameState, Double> allScoresForCard = Maps.newHashMap();
+		
+		for (OfcHand hand : player1.generateHands(card)) {
+			GameState candidateState = new GameState(player2, hand, new OfcDeck(deck.withoutCard(card)));
+			// Score is from opponent's perspective, so we flip it
+			double scoreForHand = candidateState.getValue(scorer) * -1;
+			allScoresForCard.put(candidateState, scoreForHand);
+			// it would be nice to filter out hopeless settings here
+		}
+
+		// Now we have the score for each setting of this card, filter out the unusable ones
+
+		// TODO: Double.MIN_VALUE doesn't compare properly.
+		GameState bestSet = null;
+		double bestValue = -1000000000000.0;
+		for (Map.Entry<GameState, Double> entry : allScoresForCard.entrySet()) {
+			if (entry.getValue() > bestValue) {
+				bestSet = entry.getKey();
+				bestValue = entry.getValue();
+			}
+		}
+
+		updateInstrumentation(bestSet.getStreet(), 1);
+		return bestSet;
+	}
+	
 	/**
-	 * Generate the value of each best state reachable from this one, i.e., optimal setting for each card. // lies
+	 * Generate the value of each best state reachable from this one, i.e., optimal setting for each card.
 	 */
 	private Multimap<GameState, Double> generateBestStateValues(Scorers.Scorer scorer, boolean concurrent) {
 		if (player1.isComplete()) {
@@ -198,45 +238,28 @@ public class GameState {
 		// ListMultimap allows duplicate key/value pairs
 		ListMultimap<GameState, Double> bestScores = ArrayListMultimap.create();
 
-		OfcCard previousCard = null;
-		GameState bestSet = null;
-		double bestValue = -1000000000000.0;
+		boolean[] liveFlushDraws = liveFlushDraws();
 		
-		for (OfcCard card : deck.toArray()) {
-			// If this state has no flush draws, settings using cards of the same rank will be identical.
-			// Skip recalculating the values in these cases.
-			if (!hasFlushDraw() && previousCard != null && card.getRank() == previousCard.getRank()) {
-				skipped++;
-				bestScores.put(bestSet, bestValue);
-			} else {
-				Map<GameState, Double> allScoresForCard = Maps.newHashMap();
-			
-				for (OfcHand hand : player1.generateHands(card)) {
-					GameState candidateState = new GameState(player2, hand, new OfcDeck(deck.withoutCard(card)));
-					// Score is from opponent's perspective, so we flip it
-					double scoreForHand = candidateState.getValue(scorer) * -1;
-					allScoresForCard.put(candidateState, scoreForHand);
-					// it would be nice to filter out hopeless settings here
-				}
-
-				// Now we have the score for each setting of this card, filter out the unusable ones
-				boolean instrumented = false;
-
-				// TODO: Double.MIN_VALUE doesn't compare properly.
-				bestSet = null;
-				bestValue = -1000000000000.0;
-				for (Map.Entry<GameState, Double> entry : allScoresForCard.entrySet()) {
-					if (entry.getValue() > bestValue) {
-						bestSet = entry.getKey();
-						bestValue = entry.getValue();
+		for (List<OfcCard> rankList : deck.byRank()) {
+			GameState reusableState = null;
+			for (OfcCard card : rankList) {
+				if (!liveFlushDraws[card.getSuit()]) {
+					// Don't care about flush draws, reuse a precalculated state if available
+					if (reusableState != null) {
+						skipped++;
+						// All these scores are flipped because they show the score for p2's perspective
+						bestScores.put(reusableState, reusableState.getValue(scorer) * -1);
+					} else {
+						reusableState = bestSetForCard(card, scorer);
+						bestScores.put(reusableState, reusableState.getValue(scorer) * -1);
 					}
+				} else {
+					// Live flush draw somewhere, can't reuse these states
+					// Technically reusable if the flush draws are identical and identically live, which might actually
+					// help a lot on very early streets, but not dealing with that for now.
+					GameState state = bestSetForCard(card, scorer);
+					bestScores.put(state, state.getValue(scorer) * -1);
 				}
-				bestScores.put(bestSet, bestValue);
-				if (!instrumented) {
-					instrumented = true;
-					updateInstrumentation(bestSet.getStreet(), 1);
-				}
-				previousCard = card;
 			}
 		}
 		
@@ -249,7 +272,6 @@ public class GameState {
 		if (bestScores.keySet().size() > deck.toArray().length) {
 			throw new IllegalStateException("Returning more settings than cards available");
 		}
-		
 		return bestScores;
 	}
 	
@@ -290,7 +312,7 @@ public class GameState {
 			System.out.println("\n\nSolved");
 			System.out.println(this);
 			System.out.println(value);
-			System.out.println(getInstrumentation());
+//			System.out.println(getInstrumentation());
 /*
 			try {
 				for (Scorers.Scorer scorer : scorers) {

@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 
 public class OfcSolver {
 	/**
@@ -8,14 +10,12 @@ public class OfcSolver {
 		deck.initialize();
 		
 		OfcHand player1 = new LongOfcHand();
-		
 		OfcHand player2 = new LongOfcHand();
-//		player1.setHand("/8h4c/AsKsQs", deck);
-//		player2.setHand("Td/JdJh/QdQc", deck);
-	
-		player1.setHand("Kd3hKs/As2d9d/JdJc7c7d", deck);
-		player2.setHand("QcAd/6d7sKc/AhKhQhJhTh", deck);
 
+		player1.setHand("Kc7h/Ac4h3c6d/Td5d5s5c", deck);
+		player2.setHand("QcJh/9s4s2s/KsKd7d2d3d", deck);
+		//assertValue(6.12212125d);
+		
 		GameState gs = new GameState(player1, player2, deck);
 		System.out.println(gs);
 

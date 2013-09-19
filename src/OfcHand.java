@@ -70,6 +70,9 @@ public interface OfcHand {
 	boolean willBeFouled();
 	boolean hasFlushDraw();
 	
+	// Using the fact that the Deck suit constants happen to be 0-3, so they work as indices to the array
+	boolean[] liveFlushDraws();
+	
 	int getStreet();
 	
 	/**

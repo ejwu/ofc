@@ -1,3 +1,5 @@
+import org.pokersource.game.Deck;
+
 import junit.framework.TestCase;
 import static org.junit.Assert.*;
 
@@ -249,16 +251,7 @@ public abstract class OfcHandTestCase extends TestCase {
 		assertEquals(copy, hand1);
 	}
 
-	public void testHasFlushDrawEmptyHand() {
-		assertTrue(hand1.hasFlushDraw());
-	}
-	
-	public void testHasFlushDrawEmptyMiddle() {
-		hand1.setHand("AcAd//KhKd", deck);
-		assertTrue(hand1.hasFlushDraw());
-	}
-	
-	public void testHashFlushDrawWithMiddleOneCard() {
+	public void testHasFlushDrawWithMiddleOneCard() {
 		hand1.setHand("AcAd/Ks/TcTh", deck);
 		assertTrue(hand1.hasFlushDraw());
 	}
@@ -268,12 +261,7 @@ public abstract class OfcHandTestCase extends TestCase {
 		assertTrue(hand1.hasFlushDraw());
 	}
 	
-	public void testHasFlushDrawEmptyBack() {
-		hand1.setHand("AcAd/KhKd/", deck);
-		assertTrue(hand1.hasFlushDraw());
-	}
-	
-	public void testHashFlushDrawWithBackOneCard() {
+	public void testHasFlushDrawWithBackOneCard() {
 		hand1.setHand("AcAd/TcTh/Ks", deck);
 		assertTrue(hand1.hasFlushDraw());
 	}
@@ -293,6 +281,44 @@ public abstract class OfcHandTestCase extends TestCase {
 		assertFalse(hand1.hasFlushDraw());
 	}
 	
+	public void testLiveFlushDrawsMiddle() {
+		for (boolean b : hand1.liveFlushDraws()) {
+			assertFalse(b);
+		}
+		addMiddle1("Ac");
+		assertTrue(hand1.liveFlushDraws()[Deck.SUIT_CLUBS]);
+		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_DIAMONDS]);
+		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_HEARTS]);
+		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_SPADES]);
+		addMiddle1("2d");
+		for (boolean b : hand1.liveFlushDraws()) {
+			assertFalse(b);
+		}
+	}
+
+	public void testLiveFlushDrawsMiddle2() {
+		hand1.setHand("QcJh/9s4s2s/KsKd7d2d3d", deck);
+		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_CLUBS]);
+		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_DIAMONDS]);
+		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_HEARTS]);
+		assertTrue(hand1.liveFlushDraws()[Deck.SUIT_SPADES]);
+		
+	}
+	
+	public void testLiveFlushDrawsBack() {
+		for (boolean b : hand1.liveFlushDraws()) {
+			assertFalse(b);
+		}
+		addMiddle1("7h");
+		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_CLUBS]);
+		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_DIAMONDS]);
+		assertTrue(hand1.liveFlushDraws()[Deck.SUIT_HEARTS]);
+		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_SPADES]);
+		addMiddle1("2s");
+		for (boolean b : hand1.liveFlushDraws()) {
+			assertFalse(b);
+		}
+	}
 	// TODO: many more tests, especially for scoring
 	public void testFouled() {
 		
