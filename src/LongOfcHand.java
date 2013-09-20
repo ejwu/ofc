@@ -19,10 +19,12 @@ public class LongOfcHand extends CachedValueOfcHand {
 	protected int backSize;
 
 	private static final int NO_FLUSH_DRAW = -1;
-	private int middleFlushDrawSuit = NO_FLUSH_DRAW;
-	private int backFlushDrawSuit = NO_FLUSH_DRAW;
-	// Update these when the first card is added to the middle or back
-	private boolean[] liveFlushDraws = new boolean[] {false, false, false, false};
+	private static final int ALL_FLUSH_DRAWS = -2; // subhand is empty
+	private int middleFlushDrawSuit = ALL_FLUSH_DRAWS;
+	private int backFlushDrawSuit = ALL_FLUSH_DRAWS;
+	
+	// All flush draws are live until a card has been set in the middle and the back
+	private boolean[] liveFlushDraws = new boolean[] {true, true, true, true};
 	
 	public LongOfcHand() {
 		super();
@@ -100,17 +102,28 @@ public class LongOfcHand extends CachedValueOfcHand {
 		
 		if (getBackSize() == BACK_SIZE) {
 			completeBack();
+			// Filling the subhand kills its flush draw, but the other subhand may still be live in the same suit
+			if (backFlushDrawSuit != NO_FLUSH_DRAW && backFlushDrawSuit != middleFlushDrawSuit) {
+				liveFlushDraws[backFlushDrawSuit] = false;
+			}
 			backFlushDrawSuit = NO_FLUSH_DRAW;
 		} else if (getBackSize() == 1) {
-			liveFlushDraws[card.getSuit()] = true;
 			backFlushDrawSuit = card.getSuit();
+			if (middleFlushDrawSuit != ALL_FLUSH_DRAWS) {
+				// Kill all flush draws, then reinstate this one and the back one, if it exists
+				Arrays.fill(liveFlushDraws, false);
+				liveFlushDraws[backFlushDrawSuit] = true;
+				if (middleFlushDrawSuit != NO_FLUSH_DRAW) { // already know it's not ALL_FLUSH_DRAWS
+					liveFlushDraws[middleFlushDrawSuit] = true;
+				}
+			} // otherwise, all flush draws are still live
 		} else if (backFlushDrawSuit != NO_FLUSH_DRAW && getBackSize() > 1) {
 			boolean hasFlushDraw = CardSetUtils.hasFlushDraw(back);
 
 			// If this isn't true, both middle and back have a live flush draw of the same suit,
 			// so we don't overwrite want to overwrite the live bit, which should always be true.
 			// It should get overwritten when the other flush draw dies
-			if (middleFlushDrawSuit != backFlushDrawSuit) {
+			if (middleFlushDrawSuit != ALL_FLUSH_DRAWS && middleFlushDrawSuit != backFlushDrawSuit) {
 				liveFlushDraws[backFlushDrawSuit] = hasFlushDraw;
 			}
 			if (!hasFlushDraw) {
@@ -132,10 +145,21 @@ public class LongOfcHand extends CachedValueOfcHand {
 
 		if (getMiddleSize() == MIDDLE_SIZE) {
 			completeMiddle();
+			// Filling the subhand kills its flush draw, but the other subhand may still be live in the same suit
+			if (middleFlushDrawSuit != NO_FLUSH_DRAW && middleFlushDrawSuit != backFlushDrawSuit) {
+				liveFlushDraws[middleFlushDrawSuit] = false;
+			}
 			middleFlushDrawSuit = NO_FLUSH_DRAW;
 		} else if (getMiddleSize() == 1) {
-			liveFlushDraws[card.getSuit()] = true;
 			middleFlushDrawSuit = card.getSuit();
+			if (backFlushDrawSuit != ALL_FLUSH_DRAWS) {
+				// Kill all flush draws, then reinstate this one and the back one, if it exists
+				Arrays.fill(liveFlushDraws, false);
+				liveFlushDraws[middleFlushDrawSuit] = true;
+				if (backFlushDrawSuit != NO_FLUSH_DRAW) { // already know it's not ALL_FLUSH_DRAWS
+					liveFlushDraws[backFlushDrawSuit] = true;
+				}
+			} // otherwise, all flush draws are still live
 		} else if (middleFlushDrawSuit != NO_FLUSH_DRAW && getMiddleSize() > 1) {
 			String cs = card.toString();
 			String h = toString();
@@ -144,7 +168,7 @@ public class LongOfcHand extends CachedValueOfcHand {
 			// If this isn't true, both middle and back have a live flush draw of the same suit,
 			// so we don't overwrite want to overwrite the live bit, which should always be true.
 			// It should get overwritten when the other flush draw dies
-			if (middleFlushDrawSuit != backFlushDrawSuit) {
+			if (backFlushDrawSuit != ALL_FLUSH_DRAWS && middleFlushDrawSuit != backFlushDrawSuit) {
 				liveFlushDraws[middleFlushDrawSuit] = hasFlushDraw;
 			}
 			if (!hasFlushDraw) {

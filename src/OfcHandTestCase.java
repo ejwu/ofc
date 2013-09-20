@@ -1,7 +1,14 @@
+import java.util.Arrays;
+
 import org.pokersource.game.Deck;
+import static org.pokersource.game.Deck.SUIT_CLUBS;
+import static org.pokersource.game.Deck.SUIT_DIAMONDS;
+import static org.pokersource.game.Deck.SUIT_HEARTS;
+import static org.pokersource.game.Deck.SUIT_SPADES;
 
 import junit.framework.TestCase;
 import static org.junit.Assert.*;
+
 
 public abstract class OfcHandTestCase extends TestCase {
 
@@ -16,6 +23,8 @@ public abstract class OfcHandTestCase extends TestCase {
 	
 	protected static final CompleteOfcHand VALID_NO_ROYALTY_LOW =
 		LongCompleteOfcHand.createComplete("QhJhTh/KhQdJdTd8d/Ad6d4d3d2h"); // Q-high/K-high/A-high
+
+	private static final Integer[] ALL_SUITS = {Deck.SUIT_CLUBS, Deck.SUIT_DIAMONDS, Deck.SUIT_HEARTS, Deck.SUIT_SPADES};
 	
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -281,44 +290,62 @@ public abstract class OfcHandTestCase extends TestCase {
 		assertFalse(hand1.hasFlushDraw());
 	}
 	
-	public void testLiveFlushDrawsMiddle() {
-		for (boolean b : hand1.liveFlushDraws()) {
-			assertFalse(b);
-		}
-		addMiddle1("Ac");
-		assertTrue(hand1.liveFlushDraws()[Deck.SUIT_CLUBS]);
-		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_DIAMONDS]);
-		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_HEARTS]);
-		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_SPADES]);
-		addMiddle1("2d");
-		for (boolean b : hand1.liveFlushDraws()) {
-			assertFalse(b);
-		}
+	public void testLiveFlushDrawsBack() {
+		assertLive(ALL_SUITS);
+
+		addMiddle1("Ac"); // kill the middle flush draw
+		addMiddle1("2d");		
+		assertLive(ALL_SUITS);
+		
+		addBack1("5s");
+		assertLive(SUIT_SPADES);
+		addBack1("5d");
+		assertLive();
 	}
 
 	public void testLiveFlushDrawsMiddle2() {
 		hand1.setHand("QcJh/9s4s2s/KsKd7d2d3d", deck);
-		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_CLUBS]);
-		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_DIAMONDS]);
-		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_HEARTS]);
-		assertTrue(hand1.liveFlushDraws()[Deck.SUIT_SPADES]);
-		
+		assertLive(SUIT_SPADES);
 	}
 	
-	public void testLiveFlushDrawsBack() {
-		for (boolean b : hand1.liveFlushDraws()) {
-			assertFalse(b);
-		}
+	public void testLiveFlushDrawsMiddle() {
+		assertLive(ALL_SUITS);
+		
+		addBack1("2c"); // kill the back flush draw
+		addBack1("2h");
+		
+		assertLive(ALL_SUITS);
+		
 		addMiddle1("7h");
-		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_CLUBS]);
-		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_DIAMONDS]);
-		assertTrue(hand1.liveFlushDraws()[Deck.SUIT_HEARTS]);
-		assertFalse(hand1.liveFlushDraws()[Deck.SUIT_SPADES]);
+		assertLive(SUIT_HEARTS);
 		addMiddle1("2s");
-		for (boolean b : hand1.liveFlushDraws()) {
-			assertFalse(b);
-		}
+		assertLive();
 	}
+
+	public void testLiveFlushDrawsEmptyMiddle() {
+		hand1.setHand("AcKcQd//8h7s6h5h4h", deck);
+		assertLive(ALL_SUITS);
+	}
+
+	public void testLiveFlushDrawsEmptyBack() {
+		hand1.setHand("AcKcQd/8h7s6h5h4h/", deck);
+		assertLive(ALL_SUITS);
+	}
+	
+	public void testFillingMiddleWithFlushKillsLiveFlushDraw() {
+		setHand1("AcKd/9d8d7d6d/6s5c");
+		assertLive(SUIT_DIAMONDS);
+		addMiddle1("5d"); //
+		assertLive();
+	}
+
+	public void testFillingMiddleWithoutFlushKillsLiveFlushDraw() {
+		setHand1("AcKd/9d8d7d6d/6s5c");
+		assertLive(SUIT_DIAMONDS);
+		addMiddle1("5h"); //
+		assertLive();
+	}
+	
 	// TODO: many more tests, especially for scoring
 	public void testFouled() {
 		
@@ -340,5 +367,19 @@ public abstract class OfcHandTestCase extends TestCase {
 	
 	protected void addBack1(String card) {
 		hand1.addBack(new OfcCard(card));
+	}
+
+	protected void setHand1(String hand) {
+		hand1.setHand(hand, deck);
+	}
+	
+	private void assertLive(Integer... suits) {
+		for (int suit : ALL_SUITS) {
+			if (Arrays.asList(suits).contains(suit)) {
+				assertTrue(hand1.liveFlushDraws()[suit]);
+			} else {
+				assertFalse(hand1.liveFlushDraws()[suit]);
+			}
+		}
 	}
 }
