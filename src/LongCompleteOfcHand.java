@@ -6,12 +6,15 @@ import com.google.common.base.Strings;
 import gnu.trove.map.TLongLongMap;
 import gnu.trove.map.hash.TLongLongHashMap;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class LongCompleteOfcHand extends LongOfcHand
 	implements CompleteOfcHand {
 
-	static TLongLongMap evalCache = new TLongLongHashMap();
+	// HACK: This needs to be synchronized or it may throw when it resizes and multiple threads access it.
+	// For now, just make it big enough that it never resizes.
+	static TLongLongMap evalCache = new TLongLongHashMap(10000);
 	
 	public LongCompleteOfcHand(LongOfcHand source, OfcCard card) {
 		super(source);

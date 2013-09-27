@@ -35,7 +35,7 @@ import com.google.common.collect.Table;
 
 public class GameState {
 	private static final boolean USE_CONCURRENCY = false;
-	private static final ExecutorService executor = Executors.newFixedThreadPool(1);
+	private static final ExecutorService executor = Executors.newFixedThreadPool(20);
 	
 	// bit mask for the full deck, used for checking that a state is valid
 	private static final long FULL_DECK_MASK;
@@ -227,39 +227,68 @@ public class GameState {
 		return bestSet;
 	}
 	
+	private void updateBestStates(final Multimap<GameState, Double> bestScores, final boolean[] liveFlushDraws,
+			final Scorers.Scorer scorer, List<OfcCard> rankList) {
+		GameState reusableState = null;
+		for (OfcCard card : rankList) {
+			if (!liveFlushDraws[card.getSuit()]) {
+				// Don't care about flush draws, reuse a precalculated state if available
+				if (reusableState != null) {
+					skipped++;
+					// All these scores are flipped because they show the score for p2's perspective
+					bestScores.put(reusableState, reusableState.getValue(scorer) * -1);
+				} else {
+					reusableState = bestSetForCard(card, scorer);
+					bestScores.put(reusableState, reusableState.getValue(scorer) * -1);
+				}
+			} else {
+				// Live flush draw somewhere, can't reuse these states
+				// Technically reusable if the flush draws are identical and identically live, which might actually
+				// help a lot on very early streets, but not dealing with that for now.
+				GameState state = bestSetForCard(card, scorer);
+				bestScores.put(state, state.getValue(scorer) * -1);
+			}
+		}
+	}
+	
 	/**
 	 * Generate the value of each best state reachable from this one, i.e., optimal setting for each card.
 	 */
-	private Multimap<GameState, Double> generateBestStateValues(Scorers.Scorer scorer, boolean concurrent) {
+	private Multimap<GameState, Double> generateBestStateValues(final Scorers.Scorer scorer, boolean concurrent) {
 		if (player1.isComplete()) {
 			throw new IllegalStateException("Shouldn't generate new states for complete hand");
 		}
 
 		// ListMultimap allows duplicate key/value pairs
-		ListMultimap<GameState, Double> bestScores = ArrayListMultimap.create();
-
-		boolean[] liveFlushDraws = liveFlushDraws();
+		final ListMultimap<GameState, Double> bestScores = Multimaps.synchronizedListMultimap(ArrayListMultimap.<GameState, Double>create());
+		final boolean[] liveFlushDraws = liveFlushDraws();
 		
-		for (List<OfcCard> rankList : deck.byRank()) {
-			GameState reusableState = null;
-			for (OfcCard card : rankList) {
-				if (!liveFlushDraws[card.getSuit()]) {
-					// Don't care about flush draws, reuse a precalculated state if available
-					if (reusableState != null) {
-						skipped++;
-						// All these scores are flipped because they show the score for p2's perspective
-						bestScores.put(reusableState, reusableState.getValue(scorer) * -1);
-					} else {
-						reusableState = bestSetForCard(card, scorer);
-						bestScores.put(reusableState, reusableState.getValue(scorer) * -1);
-					}
-				} else {
-					// Live flush draw somewhere, can't reuse these states
-					// Technically reusable if the flush draws are identical and identically live, which might actually
-					// help a lot on very early streets, but not dealing with that for now.
-					GameState state = bestSetForCard(card, scorer);
-					bestScores.put(state, state.getValue(scorer) * -1);
+		// This is a bad way to split up the work, since the time spent will be the max of the number of cards of any given rank,
+		// but for now it makes the code simpler
+		if (concurrent) {
+			List<Future<?>> futures = Lists.newArrayList();
+			int fs = futures.size();
+			int k = bestScores.keySet().size();
+			for (final List<OfcCard> rankList : deck.byRank()) {
+				futures.add(executor.submit(new Runnable() {
+					@Override
+					public void run() {
+						updateBestStates(bestScores, liveFlushDraws, scorer, rankList);
+					};
+				}));
+				fs = futures.size();
+				k = bestScores.keySet().size();
+			}
+			for (Future<?> f : futures) {
+				try {
+					f.get();
+				} catch (Exception e) { // no recovery
+					throw new RuntimeException(e);
 				}
+			}
+		} else {
+			for (List<OfcCard> rankList : deck.byRank()) {
+				updateBestStates(bestScores, liveFlushDraws, scorer, rankList);
 			}
 		}
 		
@@ -301,14 +330,12 @@ public class GameState {
 
 		double value;
 		if (getStreet() > 11.5 && concurrent) {
-//			value = getValueConcurrent(scorer);
-			// TODO: Fix this
-			value = getValueSequential(scorer);
+			value = getValue(scorer, true);
 		} else {
-			value = getValueSequential(scorer);
+			value = getValue(scorer, false);
 		}
 		
-		if (getStreet() < 12.0) {
+		if (getStreet() < 11.5) {
 			System.out.println("\n\nSolved");
 			System.out.println(this);
 			System.out.println(value);
@@ -339,8 +366,8 @@ public class GameState {
 		return (double) score / count;
 	}
 
-	public double getValueSequential(Scorers.Scorer scorer) {
-		Multimap<GameState, Double> bestStates = generateBestStateValues(scorer, false);
+	public double getValue(Scorers.Scorer scorer, boolean concurrent) {
+		Multimap<GameState, Double> bestStates = generateBestStateValues(scorer, concurrent);
 		double value = 0.0;
 		int count = 0;
 		for (GameState state : bestStates.keySet()) {
@@ -351,34 +378,6 @@ public class GameState {
 		return value / count;
 	}
 
-	// TODO: Does this work at all?  I don't think so...
-	// Fix for multimap if you uncomment this
-	/*
-	public double getValueConcurrent(final Scorers.Scorer scorer) {
-		List<Future<Double>> results = Lists.newArrayList();
-		Map<GameState, Double> bestStates = generateBestStateValues(scorer, false);
-		for (final GameState nextState : bestStates.keySet()) {
-			results.add(executor.submit(new Callable<Double>() {
-				@Override
-				public Double call() throws Exception {
-					return nextState.getValue(scorer);
-				}					
-			}));				
-		}
-				
-		double value = 0.0;
-		for (Future<Double> result : results) {
-			try {
-				value += result.get();
-			} catch (Exception e) {
-				throw new RuntimeException("oh, this is bad");
-			}
-		}
-
-		// Current player's value is the negative of the opponent's value.
-		return value / results.size() * -1;
-	}
-*/		
 	private String toFileString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getStreet());
